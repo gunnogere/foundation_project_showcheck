@@ -59,11 +59,13 @@ We kept the two apart so the frontend can be worked on by anyone who knows HTML/
 
 Tested on **Ubuntu Linux** (Node.js 20 or newer, Python 3). Other Linux distributions should work the same way. We haven't tested macOS or Windows.
 
+There is no database to install. The app connects to our shared online MySQL database, and the tables and demo data are already there.
+
 ### 1. Install what you need
 
 ```bash
 sudo apt update
-sudo apt install -y git python3 mysql-server
+sudo apt install -y git python3
 ```
 
 Node.js 20+ is needed for the backend only. If `node -v` shows something older, or nothing, install it from https://nodejs.org or with `nvm`.
@@ -75,32 +77,16 @@ git clone git@github.com:gunnogere/foundation_project_showcheck.git
 cd foundation_project_showcheck
 ```
 
-### 3. Create the database
+### 3. Add the database settings
 
-You need a MySQL database. The simplest option is a local one:
-
-```bash
-sudo systemctl start mysql
-sudo mysql -e "CREATE DATABASE show_check;
-CREATE USER 'showcheck'@'localhost' IDENTIFIED BY 'showcheck_pw';
-GRANT ALL ON show_check.* TO 'showcheck'@'localhost';"
-```
-
-(Using the team's hosted database instead? Ask me for the connection details. Don't commit them.)
+The database login lives in `backend/config.env`. It holds a password, so it is **not in the repo**. Ask me for the file and put it in the `backend/` folder. (`backend/config.env.example` shows what it looks like.) Never commit it.
 
 ### 4. Start the backend
 
 ```bash
 cd backend
 npm install
-cp env.example .env
-```
-
-Open `.env`. If you used the commands above, the database line is already right. Replace `JWT_SECRET` with any long random string (`openssl rand -hex 32` makes one). Then:
-
-```bash
-npm run db:push     # creates the tables
-npm run db:seed     # adds demo users and a demo show
+npm run setup       # reads config.env and creates backend/.env for you
 npm run dev         # starts the API on http://localhost:3000
 ```
 
@@ -142,12 +128,14 @@ The demo show ("Kigali Gala Night") has a projector on the wrong input (Warning)
 | Change who is allowed to do what | `backend/lib/rbac.ts` (and the copy in `frontend/js/common.js`, which only hides buttons) |
 | Change the Pass/Warning/Fail rules | `backend/lib/evaluate.ts` |
 | Change the fake discovered devices | `backend/lib/discovery.ts` |
-| Change the database tables | `backend/prisma/schema.prisma`, then `npm run db:push` |
+| Change the database tables | `backend/prisma/schema.prisma`, then `npm run db:push` (this changes the shared database, so tell the team first) |
 
 ## Troubleshooting
 
 - **Login page says it can't log in, or pages stay empty:** check that the backend terminal is running and that you opened `http://localhost:3001`, not `127.0.0.1`.
-- **`npm run db:push` can't connect:** check `DATABASE_URL` in `backend/.env` and that MySQL is running (`sudo systemctl status mysql`).
+- **`npm run setup` says config.env is missing:** you need the file from me, placed in `backend/`.
+- **The API can't reach the database:** check your internet connection and that the values in `backend/config.env` are right, then run `npm run setup` again.
+- **The database is empty or was reset:** run `npm run db:push` and then `npm run db:seed` in `backend/` to recreate the tables and demo data.
 - **Port already in use:** stop the other process, or change the port (and update `frontend/js/config.js` and `FRONTEND_ORIGIN`).
 
 ## Team 1

@@ -2,6 +2,6 @@
 config.env
 .env
 .env.*
-!env.example
+!config.env.example
 node_modules
 .next
