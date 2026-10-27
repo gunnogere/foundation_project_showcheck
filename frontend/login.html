@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in - ShowCheck</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="login">
+    <form class="card" id="login-form">
+      <h1>Show<span>Check</span></h1>
+      <p class="muted">Pre-show readiness verification</p>
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" type="email" required autocomplete="username">
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" type="password" required autocomplete="current-password">
+      </div>
+      <p class="error" id="error"></p>
+      <button class="btn primary" style="width:100%" id="submit">Sign in</button>
+    </form>
+  </div>
+  <script type="module" src="js/login.js"></script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Network Map - ShowCheck</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="layout">
+    <aside id="sidebar"></aside>
+    <main>
+      <div class="page-head">
+        <div>
+          <h1>Network Dependency Map</h1>
+          <div class="muted">Node colour is the live check status. Click a node or a line for details.</div>
+        </div>
+      </div>
+
+      <div class="grid map">
+        <div>
+          <div class="map-box" id="map"></div>
+          <div class="card hidden" id="add-connection" style="margin-top:16px">
+            <h2>Add connection</h2>
+            <div class="row">
+              <select id="from" class="inline"></select>
+              <span>→</span>
+              <select id="to" class="inline"></select>
+              <input id="label" placeholder="Label (optional)" style="width:180px">
+              <button class="btn primary" id="connect">Connect</button>
+            </div>
+          </div>
+        </div>
+        <div class="card" id="details"><p class="muted">Select a device or connection.</p></div>
+      </div>
+    </main>
+  </div>
+  <script type="module" src="js/map.js"></script>
+</body>
+</html>

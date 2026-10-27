@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard - ShowCheck</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="layout">
+    <aside id="sidebar"></aside>
+    <main>
+      <div class="page-head">
+        <div>
+          <h1>Executive Dashboard</h1>
+          <div class="muted" id="subtitle">Loading...</div>
+        </div>
+        <button class="btn primary hidden" id="run-check">Run pre-show check</button>
+      </div>
+
+      <div id="banner"></div>
+      <div class="grid stats" id="stats"></div>
+
+      <div class="grid two" style="margin-top:16px">
+        <div class="card"><h2>Health alerts</h2><div id="alerts"></div></div>
+        <div class="card"><h2>Open incidents</h2><div id="incidents"></div><p><a href="incidents.html">View all</a></p></div>
+      </div>
+
+      <div class="card">
+        <h2>Devices <span class="muted" id="last-check"></span></h2>
+        <table>
+          <thead><tr><th>Role</th><th>Device</th><th>Type</th><th>Status</th><th>Details</th></tr></thead>
+          <tbody id="devices"></tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+  <script type="module" src="js/dashboard.js"></script>
+</body>
+</html>

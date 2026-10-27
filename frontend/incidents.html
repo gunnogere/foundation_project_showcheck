@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Incidents - ShowCheck</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="layout">
+    <aside id="sidebar"></aside>
+    <main>
+      <div class="page-head">
+        <div>
+          <h1>Incident Log</h1>
+          <div class="muted">Record events during the show for later investigation.</div>
+        </div>
+        <div class="row">
+          <select id="filter" class="inline" style="min-width:110px">
+            <option value="open">Open</option>
+            <option value="all">All</option>
+          </select>
+          <button class="btn primary hidden" id="log">Log incident</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <table>
+          <thead><tr><th>Severity</th><th>Incident</th><th>Device</th><th>Reported</th><th>Status</th><th></th></tr></thead>
+          <tbody id="incidents"></tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <dialog id="incident-dialog">
+    <form id="incident-form">
+      <h2>Log incident</h2>
+      <p class="muted">What happened, and how serious is it?</p>
+      <div class="field"><label>Title</label><input id="i-title" required></div>
+      <div class="fields">
+        <div class="field">
+          <label>Severity</label>
+          <select id="i-severity">
+            <option>INFO</option>
+            <option selected>WARNING</option>
+            <option>CRITICAL</option>
+          </select>
+        </div>
+        <div class="field"><label>Device (optional)</label><select id="i-device"></select></div>
+      </div>
+      <div class="field"><label>Notes</label><textarea id="i-notes" rows="3"></textarea></div>
+      <div class="dialog-actions">
+        <button type="button" class="btn" data-close>Cancel</button>
+        <button class="btn primary">Log incident</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script type="module" src="js/incidents.js"></script>
+</body>
+</html>

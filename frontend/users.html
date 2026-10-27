@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Users - ShowCheck</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="layout">
+    <aside id="sidebar"></aside>
+    <main>
+      <h1>Users &amp; Roles</h1>
+      <p class="error hidden" id="denied">Admins only.</p>
+
+      <div id="content" class="hidden">
+        <form class="card" id="user-form">
+          <h2>Add user</h2>
+          <div class="fields">
+            <div><label>Name</label><input id="u-name" required></div>
+            <div><label>Email</label><input id="u-email" type="email" required></div>
+            <div><label>Password (8+)</label><input id="u-password" type="password" minlength="8" required></div>
+            <div><label>Role</label><select id="u-role"></select></div>
+          </div>
+          <div class="dialog-actions"><button class="btn primary">Add user</button></div>
+        </form>
+
+        <div class="card">
+          <table>
+            <thead><tr><th>Name</th><th>Email</th><th>Role</th></tr></thead>
+            <tbody id="users"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script type="module" src="js/users.js"></script>
+</body>
+</html>

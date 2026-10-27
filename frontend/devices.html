@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Devices - ShowCheck</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="layout">
+    <aside id="sidebar"></aside>
+    <main>
+      <div class="page-head">
+        <div>
+          <h1>Devices</h1>
+          <div class="muted">Discovered and manually registered gear.</div>
+        </div>
+        <button class="btn primary hidden" id="register">Register devices</button>
+      </div>
+
+      <div class="card">
+        <table>
+          <thead><tr><th>Name</th><th>Type</th><th>Source</th><th>Address</th><th>Online</th><th>Baseline slot</th><th></th></tr></thead>
+          <tbody id="devices"></tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <dialog id="register-dialog">
+    <h2>Register devices</h2>
+    <p class="muted">Scan the network, or add analogue gear by hand.</p>
+    <div class="tabs">
+      <button class="active" data-tab="auto">Auto-discovery</button>
+      <button data-tab="manual">Manual / Analogue</button>
+    </div>
+
+    <div id="tab-auto">
+      <button class="btn" id="scan">Scan network</button>
+      <ul class="scan-list" id="found"></ul>
+      <div class="dialog-actions">
+        <button class="btn" data-close>Close</button>
+        <button class="btn primary" id="register-picked" disabled>Register selected (0)</button>
+      </div>
+    </div>
+
+    <form id="tab-manual" class="hidden">
+      <div class="field"><label>Name</label><input id="m-name" required placeholder="e.g. Stage monitor wedge"></div>
+      <div class="fields">
+        <div class="field"><label>Type</label><select id="m-type"></select></div>
+        <div class="field"><label>Manufacturer</label><input id="m-manufacturer"></div>
+        <div class="field"><label>Model</label><input id="m-model"></div>
+      </div>
+      <div class="field"><label>Settings (one key=value per line)</label><textarea id="m-params" rows="3" placeholder="gain=+10 dB&#10;connector=XLR"></textarea></div>
+      <p class="muted">Analogue devices cannot be verified automatically, so they show as Unknown in checks.</p>
+      <div class="dialog-actions">
+        <button type="button" class="btn" data-close>Cancel</button>
+        <button class="btn primary">Register device</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="edit-dialog">
+    <form id="edit-form">
+      <h2 id="edit-title"></h2>
+      <p class="muted">Simulated live state. Change it to test how checks react.</p>
+      <label class="check"><input type="checkbox" id="e-online"> Device is online</label>
+      <div class="field"><label>Live settings</label><textarea id="e-params" rows="5"></textarea></div>
+      <div class="dialog-actions">
+        <button type="button" class="btn" data-close>Cancel</button>
+        <button class="btn primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script type="module" src="js/devices.js"></script>
+</body>
+</html>

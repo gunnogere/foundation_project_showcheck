@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Baseline & Check - ShowCheck</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="layout">
+    <aside id="sidebar"></aside>
+    <main>
+      <div class="page-head">
+        <div>
+          <h1>Baseline &amp; Pre-Show Check</h1>
+          <div class="muted">Approve a setup, map devices to it, then compare the live rig.</div>
+        </div>
+        <div class="row">
+          <button class="btn hidden" id="new-baseline">New baseline</button>
+          <button class="btn primary hidden" id="run-check">Run pre-show check</button>
+        </div>
+      </div>
+
+      <p class="muted hidden" id="empty">No baselines yet.</p>
+
+      <div id="baseline-area" class="hidden">
+        <div class="row" style="margin-bottom:16px">
+          <select id="baseline-select" class="inline" style="width:260px"></select>
+          <span class="badge" id="active-badge"></span>
+          <span class="muted" id="venue"></span>
+          <span class="row hidden" id="baseline-actions" style="margin-left:auto">
+            <button class="btn small primary" id="set-active">Set active</button>
+            <button class="btn small" id="add-slot">Add slot</button>
+            <button class="btn small danger" id="delete-baseline">Delete</button>
+          </span>
+        </div>
+
+        <div class="card">
+          <h2>Slots: baseline vs live</h2>
+          <table>
+            <thead><tr><th>Role</th><th>Mapped device</th><th>Expected → live</th><th>Level</th><th id="status-head">Status</th><th></th></tr></thead>
+            <tbody id="slots"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card hidden" id="history-card">
+        <h2>Check history</h2>
+        <table>
+          <thead><tr><th>When</th><th>Baseline</th><th>Run by</th><th>Pass</th><th>Warning</th><th>Fail</th><th>Unknown</th></tr></thead>
+          <tbody id="history"></tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <dialog id="baseline-dialog">
+    <form id="baseline-form">
+      <h2>New baseline</h2>
+      <p class="muted">The approved setup for a show.</p>
+      <div class="field"><label>Show name</label><input id="b-name" required></div>
+      <div class="fields">
+        <div class="field"><label>Venue</label><input id="b-venue"></div>
+        <div class="field"><label>Event date</label><input id="b-date" type="date"></div>
+      </div>
+      <label class="check"><input type="checkbox" id="b-live" checked> Capture current settings of all registered devices</label>
+      <div class="dialog-actions">
+        <button type="button" class="btn" data-close>Cancel</button>
+        <button class="btn primary">Create</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="slot-dialog">
+    <form id="slot-form">
+      <h2 id="slot-title">Add slot</h2>
+      <p class="muted">A role in the show, e.g. "Main singer mic".</p>
+      <div class="field"><label>Role / label</label><input id="s-label" required></div>
+      <div class="fields">
+        <div class="field"><label>Type</label><select id="s-type"></select></div>
+        <div class="field"><label>Mapped device</label><select id="s-device"></select></div>
+      </div>
+      <div class="field"><label>Expected settings (key=value per line)</label><textarea id="s-params" rows="4"></textarea></div>
+      <label class="check"><input type="checkbox" id="s-critical" checked> Critical (a mismatch counts as Fail instead of Warning)</label>
+      <div class="dialog-actions">
+        <button type="button" class="btn" data-close>Cancel</button>
+        <button class="btn primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script type="module" src="js/baseline.js"></script>
+</body>
+</html>

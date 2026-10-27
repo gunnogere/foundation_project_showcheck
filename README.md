@@ -51,10 +51,10 @@ The MVP uses simulated device discovery. Real protocol adapters (Shure, NMOS, Da
 
 ## Tech stack
 
-- **Frontend:** Next.js, Tailwind CSS, shadcn/ui, React Flow (`frontend/`, port 3001)
+- **Frontend:** plain HTML, CSS and JavaScript, no build step or Node.js needed (`frontend/`, port 3001)
 - **Backend:** Next.js API routes, Prisma, MySQL, JWT auth (`backend/`, port 3000)
 
-The two apps are separate so team members can work on them independently. The frontend forwards `/api` requests to the backend.
+The two apps are separate so team members can work on them independently. The frontend calls the backend API directly (CORS is enabled for `http://localhost:3001`).
 
 ## Setup
 
@@ -83,15 +83,20 @@ npm run db:seed
 npm run dev
 ```
 
+To allow a different frontend address, set `FRONTEND_ORIGIN` in `backend/.env` (comma-separated list).
+
 ### 2. Frontend
+
+No install needed. Serve the folder with any static server, for example:
 
 ```bash
 cd frontend
-npm install
-npm run dev
+python3 -m http.server 3001
 ```
 
-Open http://localhost:3001. If the backend runs elsewhere, set `BACKEND_URL` (see `frontend/env.example`).
+Open **http://localhost:3001** (use `localhost`, not `127.0.0.1`, so the login cookie works). If the backend runs elsewhere, change `API_URL` in `frontend/js/config.js`.
+
+The VS Code Live Server extension also works if you set its port to 3001 and open the site with `localhost`.
 
 ### Demo accounts
 
@@ -110,7 +115,7 @@ The seed also creates a demo baseline with a projector warning and an offline li
 
 ```
 backend/    API, Prisma schema (prisma/), seed script, check logic (lib/evaluate.ts)
-frontend/   Pages (app/), shared components (components/), API client (lib/)
+frontend/   *.html pages, css/style.css, js/ (common.js = API calls and helpers, one script per page)
 documentation/
 ```
 
