@@ -2,9 +2,22 @@
 
 Pre-show readiness verification for live productions. This is Team 1's BSE Foundations Project (October 2026).
 
-- Trello board: https://trello.com/b/9jTUQosz/foundations-project-team1
-- Presentation: https://docs.google.com/presentation/d/1_9AbxOZbDSKBgmx1QJJXtz_02gRISvQ3/edit?slide=id.h3545218bfbfdbefd_3_0#slide=id.h3545218bfbfdbefd_3_0
-- GitHub: https://github.com/gunnogere/foundation_project_showcheck
+| Resource | Link |
+|---|---|
+| Trello board | https://trello.com/b/9jTUQosz/foundations-project-team1 |
+| Presentation | https://docs.google.com/presentation/d/1_9AbxOZbDSKBgmx1QJJXtz_02gRISvQ3/edit?slide=id.h3545218bfbfdbefd_3_0#slide=id.h3545218bfbfdbefd_3_0 |
+| GitHub | https://github.com/gunnogere/foundation_project_showcheck |
+
+## Team 1
+
+| # | Name |
+|---|---|
+| 1 | Viola China |
+| 2 | Michelle Oluwayemisi Odusanwo |
+| 3 | Nadiv Gicheru |
+| 4 | Bertha Bemigisha Mbonimpa |
+| 5 | Karyna Kirabo Kiwagama |
+| 6 | Joshua Gunnogere Mulongo |
 
 ## What this is
 
@@ -138,8 +151,4 @@ The demo show ("Kigali Gala Night") has a projector on the wrong input (Warning)
 - **The database is empty or was reset:** run `npm run db:push` and then `npm run db:seed` in `backend/` to recreate the tables and demo data.
 - **Port already in use:** stop the other process, or change the port (and update `frontend/js/config.js` and `FRONTEND_ORIGIN`).
 
-## Team 1
 
-Viola China, Michelle Oluwayemisi Odusanwo, Nadiv Gicheru, Bertha Bemigisha Mbonimpa, Karyna Kirabo Kiwagama and Joshua Gunnogere Mulongo.
-
-The evaluation targets in our presentation (at least 95% of planted faults detected, no false-ready results, at least 50% less verification time) are goals for a planned pilot. No test or pilot results are claimed.
