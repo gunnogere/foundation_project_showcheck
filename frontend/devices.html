@@ -27,7 +27,7 @@
     </main>
   </div>
 
-  <dialog id="register-dialog">
+  <dialog id="register-dialog" class="wide">
     <h2>Register devices</h2>
     <p class="muted">Scan the network, or add analogue gear by hand.</p>
     <div class="tabs">
@@ -39,7 +39,7 @@
       <button class="btn" id="scan">Scan network</button>
       <p class="muted" id="scan-summary"></p>
       <ul class="scan-list" id="found"></ul>
-      <p class="muted">Scans the local network for devices. Wireless gear on UHF/RF (mics, in-ears) is not detected yet: that needs an RF receiver, planned as future work.</p>
+      <p class="muted">Only hosts answering PJLink (projectors), Shure control or RTSP (cameras) can be adopted. Wireless gear on UHF/RF (mics, in-ears) is not detected yet: that needs an RF receiver, planned as future work.</p>
       <div class="dialog-actions">
         <button class="btn" data-close>Close</button>
         <button class="btn primary" id="register-picked" disabled>Register selected (0)</button>

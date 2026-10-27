@@ -1,4 +1,5 @@
 import { $, DEVICE_TYPES, api, can, esc, formatParams, guard, parseParams, poll, requireAuth, toast } from "./common.js";
+import { deviceIcon, hostIcon } from "./icons.js";
 
 const user = await requireAuth("devices.html");
 const manage = can(user, "manageDevices");
@@ -7,10 +8,10 @@ let devices = [], found = [], editing = null;
 
 function render() {
   $("#devices").innerHTML = devices.map((d) => `<tr>
-    <td><strong>${esc(d.name)}</strong><div class="muted">${esc([d.manufacturer, d.model].filter(Boolean).join(" "))}</div></td>
+    <td><div class="name-cell">${deviceIcon(d.type)}<div><strong>${esc(d.name)}</strong><div class="muted">${esc([d.manufacturer, d.model].filter(Boolean).join(" "))}</div></div></div></td>
     <td>${esc(d.type)}</td>
     <td><span class="badge plain">${d.source === "MANUAL" ? "Analogue" : "Discovered"}</span></td>
-    <td>${esc(d.ipAddress ?? "-")}</td>
+    <td>${esc(d.ipAddress ?? "-")}${d.params?.mac ? `<div class="muted">${esc(d.params.mac)}</div>` : ""}</td>
     <td>${d.source === "MANUAL" ? "-" : d.online ? "Yes" : `<span class="diff">No</span>`}</td>
     <td>${d.baselineItem ? esc(d.baselineItem.label) : `<span class="muted">Not mapped</span>`}</td>
     <td class="actions">${manage ? `<button class="btn small" data-act="edit" data-id="${d.id}">Edit</button>
@@ -79,8 +80,8 @@ $("#scan").onclick = guard(async () => {
     $("#scan").disabled = false;
     $("#scan").textContent = "Scan again";
   }
-  // Gear that can be adopted now first, then registered, then hosts we cannot adopt.
-  const rank = (d) => (!d.adoptable ? 2 : d.registered ? 1 : 0);
+  // Adoptable first, then registered, then named hosts we cannot adopt, then unknown hosts.
+  const rank = (d) => (d.adoptable ? (d.registered ? 1 : 0) : d.name === "Unknown device" ? 3 : 2);
   found = result.devices.sort((a, b) => rank(a) - rank(b));
   $("#scan-summary").textContent = result.subnet
     ? `Scanned ${result.subnet}: ${result.hostsFound} host(s) responded, ${found.filter((d) => !d.adoptable).length} cannot be adopted.`
@@ -91,7 +92,8 @@ $("#scan").onclick = guard(async () => {
     const kind = d.adoptable ? `${d.type} · ${[d.manufacturer, d.model].filter((x) => x && x !== "-").join(" ")} · ` : "";
     return `<li class="${locked ? "done" : ""}"><label>
       <input type="checkbox" value="${esc(d.identifier)}" ${locked ? "disabled" : ""}>
-      <span><strong>${esc(d.name)}</strong><br><span class="muted">${esc(kind)}${esc(d.ipAddress)} · MAC ${esc(d.macAddress ?? "unknown")}${d.adoptable ? "" : `<br>${esc(d.reason)}`}</span></span>
+      ${hostIcon(d)}
+      <span class="grow"><strong>${esc(d.name)}</strong><br><span class="muted">${esc(kind)}${esc(d.ipAddress)} · MAC ${esc(d.macAddress ?? "unknown")}</span></span>
       <span class="badge plain" style="margin-left:auto">${tag}</span></label></li>`;
   }).join("");
   updatePickedButton();
