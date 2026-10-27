@@ -1,0 +1,149 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  TECH_DIRECTOR
+  OPERATOR
+  VIEWER
+}
+
+enum DeviceType {
+  CAMERA
+  LIGHT
+  MICROPHONE
+  SWITCH
+  MIXER
+  PROJECTOR
+  PLAYBACK
+  OTHER
+}
+
+enum DeviceSource {
+  DISCOVERED
+  MANUAL
+}
+
+enum CheckStatus {
+  PASS
+  WARNING
+  FAIL
+  UNKNOWN
+}
+
+enum Severity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+model User {
+  id           Int        @id @default(autoincrement())
+  name         String
+  email        String     @unique
+  passwordHash String
+  role         Role       @default(VIEWER)
+  createdAt    DateTime   @default(now())
+  checkRuns    CheckRun[]
+  incidents    Incident[]
+}
+
+model Device {
+  id           Int          @id @default(autoincrement())
+  name         String
+  type         DeviceType
+  source       DeviceSource @default(DISCOVERED)
+  identifier   String       @unique
+  manufacturer String?
+  model        String?
+  ipAddress    String?
+  online       Boolean      @default(true)
+  params       Json
+  lastSeen     DateTime     @default(now())
+  createdAt    DateTime     @default(now())
+
+  baselineItem BaselineItem?
+  outgoing     Connection[]  @relation("from")
+  incoming     Connection[]  @relation("to")
+  incidents    Incident[]
+}
+
+model Baseline {
+  id        Int            @id @default(autoincrement())
+  name      String
+  venue     String?
+  eventDate DateTime?
+  active    Boolean        @default(false)
+  createdAt DateTime       @default(now())
+  items     BaselineItem[]
+  checkRuns CheckRun[]
+}
+
+// One slot in the approved setup, e.g. "Main singer mic".
+model BaselineItem {
+  id             Int           @id @default(autoincrement())
+  baselineId     Int
+  label          String
+  type           DeviceType
+  expectedParams Json
+  critical       Boolean       @default(true)
+  deviceId       Int?          @unique
+  baseline       Baseline      @relation(fields: [baselineId], references: [id], onDelete: Cascade)
+  device         Device?       @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+  results        CheckResult[]
+}
+
+model Connection {
+  id           Int     @id @default(autoincrement())
+  fromDeviceId Int
+  toDeviceId   Int
+  label        String?
+  from         Device  @relation("from", fields: [fromDeviceId], references: [id], onDelete: Cascade)
+  to           Device  @relation("to", fields: [toDeviceId], references: [id], onDelete: Cascade)
+
+  @@unique([fromDeviceId, toDeviceId])
+}
+
+model CheckRun {
+  id         Int           @id @default(autoincrement())
+  baselineId Int
+  runById    Int
+  createdAt  DateTime      @default(now())
+  pass       Int           @default(0)
+  warning    Int           @default(0)
+  fail       Int           @default(0)
+  unknown    Int           @default(0)
+  baseline   Baseline      @relation(fields: [baselineId], references: [id], onDelete: Cascade)
+  runBy      User          @relation(fields: [runById], references: [id])
+  results    CheckResult[]
+}
+
+model CheckResult {
+  id      Int          @id @default(autoincrement())
+  runId   Int
+  itemId  Int
+  status  CheckStatus
+  details String       @db.Text
+  run     CheckRun     @relation(fields: [runId], references: [id], onDelete: Cascade)
+  item    BaselineItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+}
+
+model Incident {
+  id           Int       @id @default(autoincrement())
+  title        String
+  description  String?   @db.Text
+  severity     Severity  @default(WARNING)
+  resolved     Boolean   @default(false)
+  deviceId     Int?
+  reportedById Int
+  createdAt    DateTime  @default(now())
+  resolvedAt   DateTime?
+  device       Device?   @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+  reportedBy   User      @relation(fields: [reportedById], references: [id])
+}
