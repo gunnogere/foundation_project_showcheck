@@ -70,16 +70,30 @@ function updatePickedButton() {
 }
 
 $("#scan").onclick = guard(async () => {
-  $("#scan").textContent = "Scanning...";
+  $("#scan").disabled = true;
+  $("#scan").textContent = "Scanning the network (about 10s)...";
+  let result;
   try {
-    found = await api("/discovery/scan", { method: "POST" });
+    result = await api("/discovery/scan", { method: "POST" });
   } finally {
+    $("#scan").disabled = false;
     $("#scan").textContent = "Scan again";
   }
-  $("#found").innerHTML = found.map((d) => `<li class="${d.registered ? "done" : ""}"><label>
-      <input type="checkbox" value="${esc(d.identifier)}" ${d.registered ? "disabled" : ""}>
-      <span><strong>${esc(d.name)}</strong><br><span class="muted">${esc(d.type)} · ${esc(d.manufacturer)} ${esc(d.model)} · ${esc(d.ipAddress)}</span></span>
-      ${d.registered ? `<span class="muted" style="margin-left:auto">Registered</span>` : ""}</label></li>`).join("");
+  // Gear that can be adopted now first, then registered, then hosts we cannot adopt.
+  const rank = (d) => (!d.adoptable ? 2 : d.registered ? 1 : 0);
+  found = result.devices.sort((a, b) => rank(a) - rank(b));
+  const network = found.filter((d) => d.origin === "network");
+  $("#scan-summary").textContent = result.subnet
+    ? `Scanned ${result.subnet}: ${result.hostsFound} host(s) responded, ${network.filter((d) => !d.adoptable).length} cannot be adopted.`
+    : "No network connection found to scan.";
+  $("#found").innerHTML = found.map((d) => {
+    const locked = d.registered || !d.adoptable;
+    const tag = d.registered ? "Registered" : !d.adoptable ? "Not adoptable" : d.origin === "simulated" ? "Simulated" : "Adoptable";
+    return `<li class="${locked ? "done" : ""}"><label>
+      <input type="checkbox" value="${esc(d.identifier)}" ${locked ? "disabled" : ""}>
+      <span><strong>${esc(d.name)}</strong><br><span class="muted">${esc(d.type)} · ${esc([d.manufacturer, d.model].filter((x) => x && x !== "-").join(" "))} · ${esc(d.ipAddress)}${d.adoptable ? "" : `<br>${esc(d.reason)}`}</span></span>
+      <span class="badge plain" style="margin-left:auto">${tag}</span></label></li>`;
+  }).join("");
   updatePickedButton();
 });
 
@@ -88,7 +102,7 @@ $("#found").addEventListener("change", updatePickedButton);
 $("#register-picked").onclick = guard(async () => {
   const ids = picked();
   for (const d of found.filter((x) => ids.includes(x.identifier))) {
-    const { registered, ...body } = d;
+    const { registered, origin, adoptable, reason, ...body } = d;
     await api("/devices", { method: "POST", body: { ...body, source: "DISCOVERED" } });
   }
   toast(`${ids.length} device(s) registered`, "success");

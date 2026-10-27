@@ -57,7 +57,20 @@ A baseline maps *roles* to devices. For example, in the baseline Mic 1 is "Main 
 | Operator | Run checks and log incidents |
 | Viewer | Read-only |
 
-**Important:** device discovery is simulated in this MVP. The "network" is a fixed list in `backend/lib/discovery.ts`. Real protocol support (Shure, NMOS, Dante and others) would be added there.
+**Important:** discovery has two parts, a real network scan (Linux only, run by the backend) and simulated demo gear, so the demo works without hardware. Here is what each check does:
+
+| Check | Real or simulated | What it does | Result |
+|---|---|---|---|
+| Ping sweep | Real | Pings every address on the local /24 subnet | Lists every host that answers |
+| ARP and hostname lookup | Real | Reads each host's MAC address and name | Adds details to the host |
+| PJLink probe (port 4352) | Real | Asks the host if it speaks PJLink | Projector, **adoptable** |
+| Shure control probe (port 2202) | Real | Asks the host if it speaks Shure control | Mic receiver, **adoptable** |
+| RTSP probe (port 554) | Real | Asks the host if it serves a video stream | Camera, **adoptable** |
+| Any other host (laptops, phones) | Real | No supported protocol answered | Shown as **Not adoptable** |
+| Demo gear (mics, lights, mixer and so on) | Simulated | Fixed list in `backend/lib/discovery.ts` | **Adoptable**, tagged "Simulated" |
+| UHF/RF wireless signals | Not yet | Needs an RF receiver | See [Future work](#future-work) |
+
+Wireless gear on UHF/RF can't be scanned yet. See [Future work](#future-work).
 
 ## How it's built
 
@@ -141,7 +154,20 @@ The demo show ("Kigali Gala Night") has a projector on the wrong input (Warning)
 | Change who is allowed to do what | `backend/lib/rbac.ts` (and the copy in `frontend/js/common.js`, which only hides buttons) |
 | Change the Pass/Warning/Fail rules | `backend/lib/evaluate.ts` |
 | Change the fake discovered devices | `backend/lib/discovery.ts` |
+| Change the real network scan | `backend/lib/network-scan.ts` |
 | Change the database tables | `backend/prisma/schema.prisma`, then `npm run db:push` (this changes the shared database, so tell the team first) |
+
+## Future work
+
+### RF receiver for wireless gear
+
+Wireless mics and in-ear systems transmit on UHF/VHF (roughly 470-960 MHz) or proprietary 2.4 GHz links. A laptop's Wi-Fi and Bluetooth adapters can't tune to those frequencies, so ShowCheck can't detect this gear today. Adding it needs extra hardware:
+
+- **An RF receiver** (for example an SDR dongle such as an RTL-SDR, or a vendor receiver with a network API) connected to the backend machine.
+- **A spectrum scan** in the backend that checks whether each mic's baseline frequency is actually transmitting and flags interference or a wrong frequency.
+- **A new scanner** next to the network scan in `backend/lib/network-scan.ts`, feeding the same Register devices dialog, so the rest of the app doesn't change.
+
+A spectrum scan shows that a signal exists on a frequency, not which device or settings it has. Device identity and settings would still come from the mic receiver's network interface.
 
 ## Troubleshooting
 
