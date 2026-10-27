@@ -147,3 +147,10 @@ dialog h2 { margin-bottom: 4px; }
 @media (prefers-reduced-motion: reduce) { .dots i { animation: none; opacity: 0.8; } }
 .scan-list .badge { margin-left: 4px; }
 .scan-list .grow + .badge { margin-left: auto; }
+
+/* Result filters */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 4px; }
+.chip { background: #0f1830; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 6px 14px; cursor: pointer; font: inherit; font-size: 13px; }
+.chip:hover { border-color: var(--accent); color: var(--text); }
+.chip.active { background: #38bdf825; border-color: var(--accent); color: var(--text); font-weight: 600; }
+.chip em { font-style: normal; font-size: 11px; opacity: 0.8; border: 1px dashed var(--border); border-radius: 999px; padding: 1px 7px; margin-left: 4px; }

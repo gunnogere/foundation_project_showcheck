@@ -65,7 +65,10 @@ document.querySelectorAll("[data-tab]").forEach((btn) =>
   })
 );
 
-const picked = () => [...document.querySelectorAll("#found input:checked")].map((i) => i.value);
+const pickedIds = new Set();
+const picked = () => [...pickedIds];
+let filter = "all";
+let scanning = false;
 
 function updatePickedButton() {
   const n = picked().length;
@@ -75,27 +78,26 @@ function updatePickedButton() {
 
 const DOTS = `<span class="dots"><i></i><i></i><i></i></span>`;
 
-$("#scan").onclick = guard(async () => {
-  $("#scan").disabled = true;
-  $("#scan").innerHTML = `Scanning${DOTS}`;
-  $("#scan-summary").textContent = "";
-  $("#found").innerHTML = `<li class="scan-wait">Looking for devices on your network and nearby Bluetooth${DOTS}</li>`;
-  updatePickedButton();
-  let result;
-  try {
-    result = await api("/discovery/scan", { method: "POST" });
-  } finally {
-    $("#scan").disabled = false;
-    $("#scan").textContent = "Scan again";
-    if (!result) $("#found").innerHTML = "";
+const FILTERS = { all: () => true, bluetooth: (d) => d.via === "bluetooth", lan: (d) => d.via === "lan", rf: () => false };
+
+function renderFound() {
+  document.querySelectorAll("[data-filter]").forEach((b) => {
+    b.classList.toggle("active", b.dataset.filter === filter);
+    const count = $(".count", b);
+    if (count && found.length) count.textContent = ` (${found.filter(FILTERS[b.dataset.filter]).length})`;
+  });
+  if (scanning) return;
+
+  if (filter === "rf") {
+    $("#found").innerHTML = `<li class="scan-wait">RF receiver scanning is not available yet. It needs extra hardware (future work).</li>`;
+    return;
   }
-  // Adoptable first, then registered, then named hosts we cannot adopt, then unknown hosts.
-  const rank = (d) => (d.adoptable ? (d.registered ? 1 : 0) : d.name === "Unknown device" ? 3 : 2);
-  found = result.devices.sort((a, b) => rank(a) - rank(b));
-  const lan = result.subnet ? `${result.lanCount} on ${result.subnet} (LAN / Wi-Fi)` : "no network connection found";
-  const bt = result.bluetooth.available ? `${result.bluetooth.count} nearby (Bluetooth)` : `Bluetooth unavailable: ${result.bluetooth.error}`;
-  $("#scan-summary").textContent = `Found ${lan}; ${bt}. ${found.filter((d) => !d.adoptable).length} cannot be adopted.`;
-  $("#found").innerHTML = found.map((d) => {
+  const rows = found.filter(FILTERS[filter]);
+  if (!rows.length) {
+    $("#found").innerHTML = found.length ? `<li class="scan-wait">Nothing found for this filter.</li>` : "";
+    return;
+  }
+  $("#found").innerHTML = rows.map((d) => {
     const locked = d.registered || !d.adoptable;
     const tag = d.registered ? "Registered" : d.adoptable ? "Adoptable" : "Not adoptable";
     const details = [
@@ -106,16 +108,54 @@ $("#scan").onclick = guard(async () => {
       d.rssi !== undefined ? `Signal ${d.rssi} dBm` : null,
     ].filter(Boolean).join(" · ");
     return `<li class="${locked ? "done" : ""}"><label>
-      <input type="checkbox" value="${esc(d.identifier)}" ${locked ? "disabled" : ""}>
+      <input type="checkbox" value="${esc(d.identifier)}" ${locked ? "disabled" : ""} ${pickedIds.has(d.identifier) ? "checked" : ""}>
       ${hostIcon(d)}
       <span class="grow"><strong>${esc(d.name)}</strong><br><span class="muted">${esc(details)}</span></span>
       ${viaBadge(d.via)}
       <span class="badge plain">${tag}</span></label></li>`;
   }).join("");
+}
+
+document.querySelectorAll("[data-filter]").forEach((btn) =>
+  btn.addEventListener("click", () => {
+    filter = btn.dataset.filter;
+    renderFound();
+  })
+);
+
+$("#scan").onclick = guard(async () => {
+  $("#scan").disabled = true;
+  $("#scan").innerHTML = `Scanning${DOTS}`;
+  $("#scan-summary").textContent = "";
+  $("#found").innerHTML = `<li class="scan-wait">Looking for devices on your network and nearby Bluetooth${DOTS}</li>`;
+  pickedIds.clear();
+  updatePickedButton();
+  let result;
+  scanning = true;
+  try {
+    result = await api("/discovery/scan", { method: "POST" });
+  } finally {
+    scanning = false;
+    $("#scan").disabled = false;
+    $("#scan").textContent = "Scan again";
+    if (!result) $("#found").innerHTML = "";
+  }
+  // Adoptable first, then registered, then named hosts we cannot adopt, then unknown hosts.
+  const rank = (d) => (d.adoptable ? (d.registered ? 1 : 0) : d.name === "Unknown device" ? 3 : 2);
+  found = result.devices.sort((a, b) => rank(a) - rank(b));
+  const lan = result.subnet ? `${result.lanCount} on ${result.subnet} (LAN / Wi-Fi)` : "no network connection found";
+  const bt = result.bluetooth.available ? `${result.bluetooth.count} nearby (Bluetooth)` : `Bluetooth unavailable: ${result.bluetooth.error}`;
+  $("#scan-summary").textContent = `Found ${lan}; ${bt}. ${found.filter((d) => !d.adoptable).length} cannot be adopted.`;
+  renderFound();
   updatePickedButton();
 });
 
-$("#found").addEventListener("change", updatePickedButton);
+$("#found").addEventListener("change", (e) => {
+  if (e.target.type !== "checkbox") return;
+  if (e.target.checked) pickedIds.add(e.target.value);
+  else pickedIds.delete(e.target.value);
+  updatePickedButton();
+});
 
 $("#register-picked").onclick = guard(async () => {
   const ids = picked();
@@ -126,6 +166,9 @@ $("#register-picked").onclick = guard(async () => {
   toast(`${ids.length} device(s) registered`, "success");
   $("#register-dialog").close();
   $("#found").innerHTML = "";
+  found = [];
+  pickedIds.clear();
+  renderFound();
   updatePickedButton();
   await load();
 });

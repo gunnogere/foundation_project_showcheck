@@ -37,6 +37,12 @@
 
     <div id="tab-auto">
       <button class="btn" id="scan">Scan network</button>
+      <div class="chips" id="filters">
+        <button class="chip active" data-filter="all">All<span class="count"></span></button>
+        <button class="chip" data-filter="bluetooth">Bluetooth<span class="count"></span></button>
+        <button class="chip" data-filter="lan">Network (LAN / Wi-Fi)<span class="count"></span></button>
+        <button class="chip" data-filter="rf" title="Future work: needs an RF receiver">RF Receiver <em>not available</em></button>
+      </div>
       <p class="muted" id="scan-summary"></p>
       <ul class="scan-list" id="found"></ul>
       <p class="muted">Adoptable: LAN / Wi-Fi hosts answering PJLink (projectors), Shure control or RTSP (cameras), and Bluetooth headsets and speakers. Wireless gear on UHF/RF (mics, in-ears) is not detected yet: that needs an RF receiver, planned as future work.</p>
