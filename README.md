@@ -57,7 +57,7 @@ A baseline maps *roles* to devices. For example, in the baseline Mic 1 is "Main 
 | Operator | Run checks and log incidents |
 | Viewer | Read-only |
 
-**Important:** the scan results are real. The backend (Linux only) scans the local network and shows each host with its device name (for example "Jeremiahs-iPhone" or "DESKTOP-PC"), IP address and MAC address. Here is what each check does:
+**Important:** the scan results are real. The backend (Linux only) scans the local network (LAN / Wi-Fi) and nearby Bluetooth at the same time, and shows each device with its name (for example "Jeremiahs-iPhone" or "DESKTOP-PC"), MAC address and a badge saying where it was found. Here is what each check does:
 
 | Check | What it does | Result |
 |---|---|---|
@@ -67,7 +67,8 @@ A baseline maps *roles* to devices. For example, in the baseline Mic 1 is "Main 
 | PJLink probe (port 4352) | Asks the host if it speaks PJLink | Projector, **adoptable** |
 | Shure control probe (port 2202) | Asks the host if it speaks Shure control | Mic receiver, **adoptable** |
 | RTSP probe (port 554) | Asks the host if it serves a video stream | Camera, **adoptable** |
-| Any other host (laptops, phones) | No supported protocol answered | Shown as **Not adoptable** |
+| Any other LAN / Wi-Fi host (laptops, phones) | No supported protocol answered | Shown as **Not adoptable** |
+| Bluetooth scan (about 8 seconds) | Listens for nearby Bluetooth devices (needs BlueZ's `bluetoothctl` and a Bluetooth adapter) | Headsets and speakers (for example silent disco headsets), **adoptable**; phones and other devices **not adoptable** |
 | UHF/RF wireless signals | Needs an RF receiver | Not yet, see [Future work](#future-work) |
 
 The demo gear in the seeded show (mics, lights, mixer and so on) is simulated data stored in the database. It does not appear in scan results.
@@ -157,6 +158,7 @@ The demo show ("Kigali Gala Night") has a projector on the wrong input (Warning)
 | Change the Pass/Warning/Fail rules | `backend/lib/evaluate.ts` |
 | Change the fake demo devices (used by the seed) | `backend/lib/discovery.ts` |
 | Change the real network scan | `backend/lib/network-scan.ts` |
+| Change the Bluetooth scan | `backend/lib/bluetooth-scan.ts` |
 | Change the database tables | `backend/prisma/schema.prisma`, then `npm run db:push` (this changes the shared database, so tell the team first) |
 
 ## Future work

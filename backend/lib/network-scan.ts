@@ -15,11 +15,14 @@ export type NetworkHost = {
   type: DeviceType;
   manufacturer: string;
   model: string;
-  ipAddress: string;
+  ipAddress?: string;
   macAddress?: string;
   params: Record<string, string>;
   adoptable: boolean;
   reason?: string;
+  via: "lan" | "bluetooth";
+  kind?: string;
+  rssi?: number;
 };
 
 // A host is only adoptable if it answers a protocol we know how to talk to.
@@ -188,7 +191,7 @@ export async function scanNetwork(): Promise<{ subnet: string | null; hosts: Net
   const hosts = await mapLimit(alive, 16, async (ip): Promise<NetworkHost> => {
     const macAddress = ip === network.self ? network.selfMac : macs.get(ip);
     const params: Record<string, string> = macAddress ? { mac: macAddress } : {};
-    const base = { identifier: `NET-${macAddress ?? ip}`, ipAddress: ip, macAddress, params };
+    const base = { identifier: `NET-${macAddress ?? ip}`, ipAddress: ip, macAddress, params, via: "lan" as const };
 
     if (ip === network.self)
       return { ...base, name: `${os.hostname()} (this computer)`, type: "OTHER", manufacturer: "-", model: "ShowCheck server", adoptable: false, reason: "This is the computer running ShowCheck." };

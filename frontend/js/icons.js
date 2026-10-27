@@ -12,6 +12,8 @@ const PATHS = {
   projector: '<rect x="2" y="7" width="20" height="10" rx="2"/><circle cx="16" cy="12" r="2.5"/><line x1="6" y1="17" x2="6" y2="19"/><line x1="18" y1="17" x2="18" y2="19"/>',
   playback: '<circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/>',
   box: '<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>',
+  headset: '<path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>',
+  speaker: '<rect x="4" y="2" width="16" height="20" rx="2"/><circle cx="12" cy="14" r="4"/><line x1="12" y1="6" x2="12.01" y2="6"/>',
 };
 
 const BY_TYPE = {
@@ -22,11 +24,15 @@ const BY_TYPE = {
 const box = (name) =>
   `<span class="icon-box"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${PATHS[name]}</svg></span>`;
 
-export const deviceIcon = (type) => box(BY_TYPE[type] ?? "box");
+// Bluetooth devices carry a `kind` (headset, speaker, phone, laptop) from the scan.
+const byKind = (kind) => (PATHS[kind] ? box(kind) : null);
+
+export const deviceIcon = (device) => byKind(device.params?.kind) ?? box(BY_TYPE[device.type] ?? "box");
 
 // Guesses phone/laptop/etc. from a scanned host's name. Unknown hosts get no icon.
 export function hostIcon(host) {
-  if (host.adoptable) return deviceIcon(host.type);
+  if (host.kind && byKind(host.kind)) return byKind(host.kind);
+  if (host.adoptable) return deviceIcon(host);
   const n = host.name;
   if (/this computer/i.test(n)) return box("laptop");
   if (/ipad|tablet|\btab\b/i.test(n)) return box("tablet");

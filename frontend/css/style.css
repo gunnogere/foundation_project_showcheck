@@ -145,3 +145,5 @@ dialog h2 { margin-bottom: 4px; }
 @keyframes dot-bounce { 0%, 80%, 100% { transform: translateY(0); opacity: 0.35; } 40% { transform: translateY(-6px); opacity: 1; } }
 .scan-wait { display: flex; align-items: center; justify-content: center; gap: 4px; padding: 28px 0; color: var(--muted); }
 @media (prefers-reduced-motion: reduce) { .dots i { animation: none; opacity: 0.8; } }
+.scan-list .badge { margin-left: 4px; }
+.scan-list .grow + .badge { margin-left: auto; }

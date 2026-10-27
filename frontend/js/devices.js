@@ -6,11 +6,14 @@ const manage = can(user, "manageDevices");
 
 let devices = [], found = [], editing = null;
 
+const VIA_LABEL = { lan: "LAN / Wi-Fi", bluetooth: "Bluetooth" };
+const viaBadge = (via) => `<span class="badge ${via === "bluetooth" ? "sev-info" : "plain"}">${VIA_LABEL[via]}</span>`;
+
 function render() {
   $("#devices").innerHTML = devices.map((d) => `<tr>
-    <td><div class="name-cell">${deviceIcon(d.type)}<div><strong>${esc(d.name)}</strong><div class="muted">${esc([d.manufacturer, d.model].filter(Boolean).join(" "))}</div></div></div></td>
+    <td><div class="name-cell">${deviceIcon(d)}<div><strong>${esc(d.name)}</strong><div class="muted">${esc([d.manufacturer, d.model].filter(Boolean).join(" "))}</div></div></div></td>
     <td>${esc(d.type)}</td>
-    <td><span class="badge plain">${d.source === "MANUAL" ? "Analogue" : "Discovered"}</span></td>
+    <td>${d.source === "MANUAL" ? `<span class="badge plain">Analogue</span>` : viaBadge(d.params?.via === "bluetooth" ? "bluetooth" : "lan")}</td>
     <td>${esc(d.ipAddress ?? "-")}${d.params?.mac ? `<div class="muted">${esc(d.params.mac)}</div>` : ""}</td>
     <td>${d.source === "MANUAL" ? "-" : d.online ? "Yes" : `<span class="diff">No</span>`}</td>
     <td>${d.baselineItem ? esc(d.baselineItem.label) : `<span class="muted">Not mapped</span>`}</td>
@@ -76,7 +79,7 @@ $("#scan").onclick = guard(async () => {
   $("#scan").disabled = true;
   $("#scan").innerHTML = `Scanning${DOTS}`;
   $("#scan-summary").textContent = "";
-  $("#found").innerHTML = `<li class="scan-wait">Looking for devices on your network${DOTS}</li>`;
+  $("#found").innerHTML = `<li class="scan-wait">Looking for devices on your network and nearby Bluetooth${DOTS}</li>`;
   updatePickedButton();
   let result;
   try {
@@ -89,18 +92,25 @@ $("#scan").onclick = guard(async () => {
   // Adoptable first, then registered, then named hosts we cannot adopt, then unknown hosts.
   const rank = (d) => (d.adoptable ? (d.registered ? 1 : 0) : d.name === "Unknown device" ? 3 : 2);
   found = result.devices.sort((a, b) => rank(a) - rank(b));
-  $("#scan-summary").textContent = result.subnet
-    ? `Scanned ${result.subnet}: ${result.hostsFound} host(s) responded, ${found.filter((d) => !d.adoptable).length} cannot be adopted.`
-    : "No network connection found to scan.";
+  const lan = result.subnet ? `${result.lanCount} on ${result.subnet} (LAN / Wi-Fi)` : "no network connection found";
+  const bt = result.bluetooth.available ? `${result.bluetooth.count} nearby (Bluetooth)` : `Bluetooth unavailable: ${result.bluetooth.error}`;
+  $("#scan-summary").textContent = `Found ${lan}; ${bt}. ${found.filter((d) => !d.adoptable).length} cannot be adopted.`;
   $("#found").innerHTML = found.map((d) => {
     const locked = d.registered || !d.adoptable;
     const tag = d.registered ? "Registered" : d.adoptable ? "Adoptable" : "Not adoptable";
-    const kind = d.adoptable ? `${d.type} · ${[d.manufacturer, d.model].filter((x) => x && x !== "-").join(" ")} · ` : "";
+    const details = [
+      d.adoptable && d.via === "lan" ? d.type : null,
+      d.adoptable ? (d.via === "bluetooth" ? d.model : [d.manufacturer, d.model].filter((x) => x && x !== "-").join(" ")) : null,
+      d.ipAddress,
+      `MAC ${d.macAddress ?? "unknown"}`,
+      d.rssi !== undefined ? `Signal ${d.rssi} dBm` : null,
+    ].filter(Boolean).join(" · ");
     return `<li class="${locked ? "done" : ""}"><label>
       <input type="checkbox" value="${esc(d.identifier)}" ${locked ? "disabled" : ""}>
       ${hostIcon(d)}
-      <span class="grow"><strong>${esc(d.name)}</strong><br><span class="muted">${esc(kind)}${esc(d.ipAddress)} · MAC ${esc(d.macAddress ?? "unknown")}</span></span>
-      <span class="badge plain" style="margin-left:auto">${tag}</span></label></li>`;
+      <span class="grow"><strong>${esc(d.name)}</strong><br><span class="muted">${esc(details)}</span></span>
+      ${viaBadge(d.via)}
+      <span class="badge plain">${tag}</span></label></li>`;
   }).join("");
   updatePickedButton();
 });
@@ -110,7 +120,7 @@ $("#found").addEventListener("change", updatePickedButton);
 $("#register-picked").onclick = guard(async () => {
   const ids = picked();
   for (const d of found.filter((x) => ids.includes(x.identifier))) {
-    const { registered, adoptable, reason, macAddress, ...body } = d;
+    const { registered, adoptable, reason, macAddress, via, kind, rssi, ...body } = d;
     await api("/devices", { method: "POST", body: { ...body, source: "DISCOVERED" } });
   }
   toast(`${ids.length} device(s) registered`, "success");
