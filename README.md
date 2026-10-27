@@ -57,18 +57,20 @@ A baseline maps *roles* to devices. For example, in the baseline Mic 1 is "Main 
 | Operator | Run checks and log incidents |
 | Viewer | Read-only |
 
-**Important:** discovery has two parts, a real network scan (Linux only, run by the backend) and simulated demo gear, so the demo works without hardware. Here is what each check does:
+**Important:** the scan results are real. The backend (Linux only) scans the local network and shows each host with its device name (for example "Jeremiahs-iPhone" or "DESKTOP-PC"), IP address and MAC address. Here is what each check does:
 
-| Check | Real or simulated | What it does | Result |
-|---|---|---|---|
-| Ping sweep | Real | Pings every address on the local /24 subnet | Lists every host that answers |
-| ARP and hostname lookup | Real | Reads each host's MAC address and name | Adds details to the host |
-| PJLink probe (port 4352) | Real | Asks the host if it speaks PJLink | Projector, **adoptable** |
-| Shure control probe (port 2202) | Real | Asks the host if it speaks Shure control | Mic receiver, **adoptable** |
-| RTSP probe (port 554) | Real | Asks the host if it serves a video stream | Camera, **adoptable** |
-| Any other host (laptops, phones) | Real | No supported protocol answered | Shown as **Not adoptable** |
-| Demo gear (mics, lights, mixer and so on) | Simulated | Fixed list in `backend/lib/discovery.ts` | **Adoptable**, tagged "Simulated" |
-| UHF/RF wireless signals | Not yet | Needs an RF receiver | See [Future work](#future-work) |
+| Check | What it does | Result |
+|---|---|---|
+| Ping sweep | Pings every address on the local /24 subnet | Lists every host that answers |
+| ARP lookup | Reads each host's MAC address | Adds the MAC address |
+| Name lookup (mDNS, NetBIOS, reverse DNS) | Asks the host for its name | Shows "Jeremiahs-iPhone" instead of just an IP |
+| PJLink probe (port 4352) | Asks the host if it speaks PJLink | Projector, **adoptable** |
+| Shure control probe (port 2202) | Asks the host if it speaks Shure control | Mic receiver, **adoptable** |
+| RTSP probe (port 554) | Asks the host if it serves a video stream | Camera, **adoptable** |
+| Any other host (laptops, phones) | No supported protocol answered | Shown as **Not adoptable** |
+| UHF/RF wireless signals | Needs an RF receiver | Not yet, see [Future work](#future-work) |
+
+The demo gear in the seeded show (mics, lights, mixer and so on) is simulated data stored in the database. It does not appear in scan results.
 
 Wireless gear on UHF/RF can't be scanned yet. See [Future work](#future-work).
 
@@ -142,7 +144,7 @@ The seed creates one user per role. **The default password for all of them is `p
 
 These are demo accounts for development only. Change them before using this for anything real.
 
-The demo show ("Kigali Gala Night") has a projector on the wrong input (Warning) and an offline LED bar (Fail), so you can see the states straight away. Log in as the Technical Director, open **Devices** and use **Edit** on any device to change its live settings or take it offline, then run a check from the dashboard to see how the result changes. **Register devices** has a scan that finds two unregistered devices (Lapel Mic C and Camera FOH).
+The demo show ("Kigali Gala Night") has a projector on the wrong input (Warning) and an offline LED bar (Fail), so you can see the states straight away. Log in as the Technical Director, open **Devices** and use **Edit** on any device to change its live settings or take it offline, then run a check from the dashboard to see how the result changes. **Register devices** has a network scan that lists the real hosts on your network (see above); other laptops and phones show as not adoptable.
 
 ## Where to change things
 
@@ -153,7 +155,7 @@ The demo show ("Kigali Gala Night") has a projector on the wrong input (Warning)
 | Point the frontend at a different backend | `frontend/js/config.js` |
 | Change who is allowed to do what | `backend/lib/rbac.ts` (and the copy in `frontend/js/common.js`, which only hides buttons) |
 | Change the Pass/Warning/Fail rules | `backend/lib/evaluate.ts` |
-| Change the fake discovered devices | `backend/lib/discovery.ts` |
+| Change the fake demo devices (used by the seed) | `backend/lib/discovery.ts` |
 | Change the real network scan | `backend/lib/network-scan.ts` |
 | Change the database tables | `backend/prisma/schema.prisma`, then `npm run db:push` (this changes the shared database, so tell the team first) |
 

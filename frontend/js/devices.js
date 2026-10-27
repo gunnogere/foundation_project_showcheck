@@ -82,16 +82,16 @@ $("#scan").onclick = guard(async () => {
   // Gear that can be adopted now first, then registered, then hosts we cannot adopt.
   const rank = (d) => (!d.adoptable ? 2 : d.registered ? 1 : 0);
   found = result.devices.sort((a, b) => rank(a) - rank(b));
-  const network = found.filter((d) => d.origin === "network");
   $("#scan-summary").textContent = result.subnet
-    ? `Scanned ${result.subnet}: ${result.hostsFound} host(s) responded, ${network.filter((d) => !d.adoptable).length} cannot be adopted.`
+    ? `Scanned ${result.subnet}: ${result.hostsFound} host(s) responded, ${found.filter((d) => !d.adoptable).length} cannot be adopted.`
     : "No network connection found to scan.";
   $("#found").innerHTML = found.map((d) => {
     const locked = d.registered || !d.adoptable;
-    const tag = d.registered ? "Registered" : !d.adoptable ? "Not adoptable" : d.origin === "simulated" ? "Simulated" : "Adoptable";
+    const tag = d.registered ? "Registered" : d.adoptable ? "Adoptable" : "Not adoptable";
+    const kind = d.adoptable ? `${d.type} · ${[d.manufacturer, d.model].filter((x) => x && x !== "-").join(" ")} · ` : "";
     return `<li class="${locked ? "done" : ""}"><label>
       <input type="checkbox" value="${esc(d.identifier)}" ${locked ? "disabled" : ""}>
-      <span><strong>${esc(d.name)}</strong><br><span class="muted">${esc(d.type)} · ${esc([d.manufacturer, d.model].filter((x) => x && x !== "-").join(" "))} · ${esc(d.ipAddress)}${d.adoptable ? "" : `<br>${esc(d.reason)}`}</span></span>
+      <span><strong>${esc(d.name)}</strong><br><span class="muted">${esc(kind)}${esc(d.ipAddress)} · MAC ${esc(d.macAddress ?? "unknown")}${d.adoptable ? "" : `<br>${esc(d.reason)}`}</span></span>
       <span class="badge plain" style="margin-left:auto">${tag}</span></label></li>`;
   }).join("");
   updatePickedButton();
@@ -102,7 +102,7 @@ $("#found").addEventListener("change", updatePickedButton);
 $("#register-picked").onclick = guard(async () => {
   const ids = picked();
   for (const d of found.filter((x) => ids.includes(x.identifier))) {
-    const { registered, origin, adoptable, reason, ...body } = d;
+    const { registered, adoptable, reason, macAddress, ...body } = d;
     await api("/devices", { method: "POST", body: { ...body, source: "DISCOVERED" } });
   }
   toast(`${ids.length} device(s) registered`, "success");

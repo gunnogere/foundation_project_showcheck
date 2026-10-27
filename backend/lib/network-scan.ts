@@ -1,5 +1,6 @@
 import os from "node:os";
 import net from "node:net";
+import dgram from "node:dgram";
 import dns from "node:dns/promises";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
@@ -15,6 +16,7 @@ export type NetworkHost = {
   manufacturer: string;
   model: string;
   ipAddress: string;
+  macAddress?: string;
   params: Record<string, string>;
   adoptable: boolean;
   reason?: string;
@@ -36,7 +38,7 @@ function localNetwork() {
     const a = addrs?.find((x) => x.family === "IPv4" && !x.internal);
     if (a) {
       const [p1, p2, p3] = a.address.split(".");
-      return { self: a.address, base: `${p1}.${p2}.${p3}`, subnet: `${p1}.${p2}.${p3}.0/24` };
+      return { self: a.address, selfMac: a.mac, base: `${p1}.${p2}.${p3}`, subnet: `${p1}.${p2}.${p3}.0/24` };
     }
   }
   return null;
@@ -88,8 +90,90 @@ const portOpen = (ip: string, port: number) =>
     s.once("error", () => resolve(false));
   });
 
-const hostname = (ip: string) =>
-  Promise.race([dns.reverse(ip).then((n) => n[0]), new Promise<undefined>((r) => setTimeout(r, 800))]).catch(() => undefined);
+// ---------- Device names ----------
+// Phones answer mDNS (Apple: "Joshuas-iPhone"), Windows PCs answer NetBIOS ("DESKTOP-PC"),
+// and routers often know DHCP hostnames via reverse DNS.
+
+function udpQuery(ip: string, port: number, packet: Buffer): Promise<Buffer | null> {
+  return new Promise((resolve) => {
+    const sock = dgram.createSocket("udp4");
+    let finished = false;
+    const finish = (b: Buffer | null) => {
+      if (finished) return;
+      finished = true;
+      clearTimeout(timer);
+      sock.close();
+      resolve(b);
+    };
+    const timer = setTimeout(() => finish(null), 1000);
+    sock.once("message", (m) => finish(m));
+    sock.once("error", () => finish(null));
+    sock.send(packet, port, ip, (err) => err && finish(null));
+  });
+}
+
+// Reads a DNS-style name (with compression pointers) and where it ends.
+function readName(buf: Buffer, start: number) {
+  const labels: string[] = [];
+  let off = start, end = -1, hops = 0;
+  while (off < buf.length && hops < 20) {
+    const len = buf[off];
+    if (len === 0) {
+      if (end < 0) end = off + 1;
+      break;
+    }
+    if ((len & 0xc0) === 0xc0) {
+      if (end < 0) end = off + 2;
+      off = ((len & 0x3f) << 8) | buf[off + 1];
+      hops++;
+      continue;
+    }
+    labels.push(buf.toString("latin1", off + 1, off + 1 + len));
+    off += len + 1;
+  }
+  return { name: labels.join("."), end: end < 0 ? off : end };
+}
+
+async function mdnsName(ip: string) {
+  const labels = [...ip.split(".").reverse(), "in-addr", "arpa"].map((l) => Buffer.concat([Buffer.from([l.length]), Buffer.from(l)]));
+  const query = Buffer.concat([Buffer.from([0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0]), ...labels, Buffer.from([0, 0, 12, 0x80, 1])]);
+  const res = await udpQuery(ip, 5353, query);
+  if (!res || res.length < 12 || res.readUInt16BE(6) === 0) return undefined;
+
+  let off = 12;
+  for (let i = 0; i < res.readUInt16BE(4); i++) off = readName(res, off).end + 4;
+  const answerName = readName(res, off);
+  return readName(res, answerName.end + 10).name;
+}
+
+async function netbiosName(ip: string) {
+  const query = Buffer.concat([
+    Buffer.from([0x12, 0x34, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0x20]),
+    Buffer.from("CK" + "A".repeat(30)),
+    Buffer.from([0, 0, 0x21, 0, 1]),
+  ]);
+  const res = await udpQuery(ip, 137, query);
+  if (!res || res.length < 57) return undefined;
+
+  const rdata = readName(res, 12).end + 10;
+  const count = res[rdata];
+  for (let i = 0; i < count; i++) {
+    const e = rdata + 1 + i * 18;
+    const suffix = res[e + 15], flags = res.readUInt16BE(e + 16);
+    if (suffix === 0 && (flags & 0x8000) === 0) return res.toString("latin1", e, e + 15).trim();
+  }
+  return undefined;
+}
+
+const reverseDns = (ip: string) =>
+  Promise.race([dns.reverse(ip).then((n) => n[0]), new Promise<undefined>((r) => setTimeout(r, 1000))]).catch(() => undefined);
+
+async function deviceName(ip: string) {
+  const [mdns, netbios, rdns] = await Promise.all([mdnsName(ip).catch(() => undefined), netbiosName(ip).catch(() => undefined), reverseDns(ip)]);
+  // Some routers answer reverse DNS with the IP itself; that is not a name.
+  const real = [mdns, netbios, rdns].find((n) => n && !/^\d+\.\d+\.\d+\.\d+/.test(n) && !n.endsWith("arpa"));
+  return real?.split(".")[0] || undefined;
+}
 
 export async function scanNetwork(): Promise<{ subnet: string | null; hosts: NetworkHost[] }> {
   const network = localNetwork();
@@ -102,19 +186,19 @@ export async function scanNetwork(): Promise<{ subnet: string | null; hosts: Net
   const macs = await arpTable();
 
   const hosts = await mapLimit(alive, 16, async (ip): Promise<NetworkHost> => {
-    const mac = macs.get(ip);
-    const params: Record<string, string> = mac ? { mac } : {};
-    const base = { identifier: `NET-${mac ?? ip}`, ipAddress: ip, params };
+    const macAddress = ip === network.self ? network.selfMac : macs.get(ip);
+    const params: Record<string, string> = macAddress ? { mac: macAddress } : {};
+    const base = { identifier: `NET-${macAddress ?? ip}`, ipAddress: ip, macAddress, params };
 
     if (ip === network.self)
       return { ...base, name: `${os.hostname()} (this computer)`, type: "OTHER", manufacturer: "-", model: "ShowCheck server", adoptable: false, reason: "This is the computer running ShowCheck." };
 
-    const name = await hostname(ip);
+    const name = (await deviceName(ip)) ?? "Unknown device";
     for (const sig of SIGNATURES)
       if (await portOpen(ip, sig.port))
-        return { ...base, name: name ?? `${sig.model} (${ip})`, type: sig.type, manufacturer: sig.manufacturer, model: sig.model, adoptable: true };
+        return { ...base, name, type: sig.type, manufacturer: sig.manufacturer, model: sig.model, adoptable: true };
 
-    return { ...base, name: name ?? `Unknown host (${ip})`, type: "OTHER", manufacturer: "Unknown", model: "", adoptable: false, reason: NOT_AV };
+    return { ...base, name, type: "OTHER", manufacturer: "Unknown", model: "", adoptable: false, reason: NOT_AV };
   });
 
   return { subnet: network.subnet, hosts };
