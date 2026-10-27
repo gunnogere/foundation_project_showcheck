@@ -70,15 +70,21 @@ function updatePickedButton() {
   $("#register-picked").disabled = n === 0;
 }
 
+const DOTS = `<span class="dots"><i></i><i></i><i></i></span>`;
+
 $("#scan").onclick = guard(async () => {
   $("#scan").disabled = true;
-  $("#scan").textContent = "Scanning the network (about 10s)...";
+  $("#scan").innerHTML = `Scanning${DOTS}`;
+  $("#scan-summary").textContent = "";
+  $("#found").innerHTML = `<li class="scan-wait">Looking for devices on your network${DOTS}</li>`;
+  updatePickedButton();
   let result;
   try {
     result = await api("/discovery/scan", { method: "POST" });
   } finally {
     $("#scan").disabled = false;
     $("#scan").textContent = "Scan again";
+    if (!result) $("#found").innerHTML = "";
   }
   // Adoptable first, then registered, then named hosts we cannot adopt, then unknown hosts.
   const rank = (d) => (d.adoptable ? (d.registered ? 1 : 0) : d.name === "Unknown device" ? 3 : 2);
