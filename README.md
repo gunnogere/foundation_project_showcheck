@@ -53,11 +53,11 @@ backend/    Next.js API (port 3000) + Prisma + MySQL. Login, roles, check logic.
 frontend/   Plain HTML, CSS and JavaScript (port 3001). No Node.js or build step.
 ```
 
-I kept the two apart so the frontend can be worked on by anyone who knows HTML/JS, without touching Node. The frontend just calls the backend's `/api` routes.
+We kept the two apart so the frontend can be worked on by anyone who knows HTML/JS, without touching Node. The frontend just calls the backend's `/api` routes.
 
 ## Running it on your machine
 
-Tested on **Ubuntu Linux** (Node.js 20 or newer, Python 3). Other Linux distributions should work the same way. I haven't tested macOS or Windows.
+Tested on **Ubuntu Linux** (Node.js 20 or newer, Python 3). Other Linux distributions should work the same way. We haven't tested macOS or Windows.
 
 ### 1. Install what you need
 
