@@ -3,37 +3,139 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Users - ShowCheck</title>
+  <title>User Management - ShowCheck</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
   <div class="layout">
     <aside id="sidebar"></aside>
+
     <main>
-      <h1>Users &amp; Roles</h1>
-      <p class="error hidden" id="denied">Admins only.</p>
-
-      <div id="content" class="hidden">
-        <form class="card" id="user-form">
-          <h2>Add user</h2>
-          <div class="fields">
-            <div><label>Name</label><input id="u-name" required></div>
-            <div><label>Email</label><input id="u-email" type="email" required></div>
-            <div><label>Password (8+)</label><input id="u-password" type="password" minlength="8" required></div>
-            <div><label>Role</label><select id="u-role"></select></div>
-          </div>
-          <div class="dialog-actions"><button class="btn primary">Add user</button></div>
-        </form>
-
-        <div class="card">
-          <table>
-            <thead><tr><th>Name</th><th>Email</th><th>Role</th></tr></thead>
-            <tbody id="users"></tbody>
-          </table>
+      <!-- Page heading -->
+      <div class="page-head">
+        <div>
+          <div class="dashboard-eyebrow">SYSTEM ADMINISTRATION / USERS</div>
+          <h1>User Management</h1>
+          <p class="muted">
+            Manage team accounts and control access to ShowCheck.
+          </p>
         </div>
+      </div>
+
+      <!-- Access denied message -->
+      <section id="denied" class="card hidden">
+        <h2>Access restricted</h2>
+        <p class="muted">
+          You do not have permission to manage user accounts.
+          Contact a system administrator if you need access.
+        </p>
+      </section>
+
+      <!-- User management content -->
+      <div id="content" class="hidden">
+
+        <!-- Create user -->
+        <section class="dashboard-section">
+          <div class="section-heading">
+            <div>
+              <h2>Add team member</h2>
+              <p class="muted">
+                Create an account for someone who needs access to ShowCheck.
+              </p>
+            </div>
+          </div>
+
+          <div class="card">
+            <form id="user-form">
+              <div class="fields">
+                <div class="field">
+                  <label for="u-name">Full name</label>
+                  <input
+                    id="u-name"
+                    required
+                    placeholder="Enter full name"
+                  >
+                </div>
+
+                <div class="field">
+                  <label for="u-email">Email address</label>
+                  <input
+                    id="u-email"
+                    type="email"
+                    required
+                    placeholder="name@example.com"
+                  >
+                </div>
+
+                <div class="field">
+                  <label for="u-password">Temporary password</label>
+                  <input
+                    id="u-password"
+                    type="password"
+                    required
+                    minlength="8"
+                    placeholder="Enter a password"
+                  >
+                </div>
+
+                <div class="field">
+                  <label for="u-role">Access role</label>
+                  <select id="u-role" required></select>
+                </div>
+              </div>
+
+              <div class="dialog-actions">
+                <button type="submit" class="btn primary">
+                  Create user account
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- Existing users -->
+        <section class="dashboard-section">
+          <div class="section-heading">
+            <div>
+              <h2>Registered team members</h2>
+              <p class="muted">
+                Review accounts and update team member roles.
+              </p>
+            </div>
+
+            <span class="badge plain">User directory</span>
+          </div>
+
+          <div class="card table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email address</th>
+                  <th>Access role</th>
+                </tr>
+              </thead>
+
+              <tbody id="users">
+                <tr>
+                  <td colspan="3" class="muted">
+                    Loading team members...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p class="muted small-text">
+            Your own account's role cannot be changed from this page.
+          </p>
+        </section>
+
       </div>
     </main>
   </div>
+
   <script type="module" src="js/users.js"></script>
 </body>
 </html>

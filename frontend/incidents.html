@@ -6,53 +6,127 @@
   <title>Incidents - ShowCheck</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
   <div class="layout">
     <aside id="sidebar"></aside>
+
     <main>
+      <!-- Page heading -->
       <div class="page-head">
         <div>
-          <h1>Incident Log</h1>
-          <div class="muted">Record events during the show for later investigation.</div>
+          <div class="dashboard-eyebrow">SHOW OPERATIONS / INCIDENTS</div>
+          <h1>Incident Management</h1>
+          <p class="muted">
+            Record, review and resolve equipment and production issues.
+          </p>
         </div>
-        <div class="row">
-          <select id="filter" class="inline" style="min-width:110px">
-            <option value="open">Open</option>
-            <option value="all">All</option>
-          </select>
-          <button class="btn primary hidden" id="log">Log incident</button>
-        </div>
+
+        <button class="btn primary hidden" id="log">
+          + Log incident
+        </button>
       </div>
 
-      <div class="card">
-        <table>
-          <thead><tr><th>Severity</th><th>Incident</th><th>Device</th><th>Reported</th><th>Status</th><th></th></tr></thead>
-          <tbody id="incidents"></tbody>
-        </table>
-      </div>
+      <!-- Incident overview -->
+      <section class="dashboard-section">
+        <div class="section-heading">
+          <div>
+            <h2>Incident register</h2>
+            <p class="muted">
+              Review reported issues and track their resolution.
+            </p>
+          </div>
+
+          <div class="field filter-field">
+            <label for="filter">Show</label>
+            <select id="filter">
+              <option value="open">Open incidents</option>
+              <option value="all">All incidents</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Incident table -->
+        <div class="card table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Severity</th>
+                <th>Incident</th>
+                <th>Device</th>
+                <th>Reported</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+
+            <tbody id="incidents">
+              <tr>
+                <td colspan="6" class="muted">
+                  Loading incidents...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
     </main>
   </div>
 
+  <!-- Log incident dialog -->
   <dialog id="incident-dialog">
     <form id="incident-form">
-      <h2>Log incident</h2>
-      <p class="muted">What happened, and how serious is it?</p>
-      <div class="field"><label>Title</label><input id="i-title" required></div>
-      <div class="fields">
-        <div class="field">
-          <label>Severity</label>
-          <select id="i-severity">
-            <option>INFO</option>
-            <option selected>WARNING</option>
-            <option>CRITICAL</option>
-          </select>
-        </div>
-        <div class="field"><label>Device (optional)</label><select id="i-device"></select></div>
+      <div class="dashboard-eyebrow">INCIDENT REPORT</div>
+      <h2>Log a new incident</h2>
+
+      <p class="muted">
+        Record an issue that requires attention from the production team.
+      </p>
+
+      <div class="field">
+        <label for="i-title">Incident title</label>
+        <input
+          id="i-title"
+          required
+          maxlength="200"
+          placeholder="e.g. Projector not responding"
+        >
       </div>
-      <div class="field"><label>Notes</label><textarea id="i-notes" rows="3"></textarea></div>
+
+      <div class="field">
+        <label for="i-severity">Severity</label>
+        <select id="i-severity" required>
+          <option value="LOW">Low</option>
+          <option value="MEDIUM" selected>Medium</option>
+          <option value="HIGH">High</option>
+          <option value="CRITICAL">Critical</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="i-device">Related device</label>
+        <select id="i-device">
+          <option value="">None</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="i-notes">Description / notes</label>
+        <textarea
+          id="i-notes"
+          rows="4"
+          placeholder="Describe what happened and any relevant observations..."
+        ></textarea>
+      </div>
+
       <div class="dialog-actions">
-        <button type="button" class="btn" data-close>Cancel</button>
-        <button class="btn primary">Log incident</button>
+        <button type="button" class="btn" data-close>
+          Cancel
+        </button>
+
+        <button type="submit" class="btn primary">
+          Submit incident
+        </button>
       </div>
     </form>
   </dialog>

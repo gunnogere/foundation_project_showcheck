@@ -134,3 +134,24 @@ export async function requireAuth(page) {
   });
   return user;
 }
+
+// ---------- Live connection indicator ----------
+// Updates the shared monitoring indicator when a page has one.
+export function setLiveIndicator(state, message = "") {
+  const indicator = $("#live-indicator");
+  if (!indicator) return;
+
+  indicator.classList.remove("live", "connecting", "offline");
+  indicator.classList.add(state);
+
+  const label = indicator.querySelector(".live-label");
+  if (label) {
+    label.textContent = message || {
+      live: "Live monitoring",
+      connecting: "Connecting...",
+      offline: "Connection issue",
+    }[state] || "Monitoring status unknown";
+  }
+
+  indicator.setAttribute("aria-label", message || state);
+}

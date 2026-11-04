@@ -9,32 +9,112 @@
 <body>
   <div class="layout">
     <aside id="sidebar"></aside>
+
     <main>
+      <!-- Page heading -->
       <div class="page-head">
         <div>
+          <div class="dashboard-eyebrow">SHOW OPERATIONS / CONNECTIVITY</div>
           <h1>Network Dependency Map</h1>
-          <div class="muted">Node colour is the live check status. Click a node or a line for details.</div>
+          <div class="muted">
+            Visualise equipment connections and inspect device health.
+            Select a device or connection for more information.
+          </div>
         </div>
       </div>
 
-      <div class="grid map">
-        <div>
-          <div class="map-box" id="map"></div>
-          <div class="card hidden" id="add-connection" style="margin-top:16px">
-            <h2>Add connection</h2>
-            <div class="row">
-              <select id="from" class="inline"></select>
-              <span>→</span>
-              <select id="to" class="inline"></select>
-              <input id="label" placeholder="Label (optional)" style="width:180px">
-              <button class="btn primary" id="connect">Connect</button>
+      <!-- Map legend -->
+      <section class="dashboard-section">
+        <div class="card">
+          <div class="section-heading">
+            <div>
+              <h2>Connection status legend</h2>
+              <p class="muted">
+                Colours represent the latest available baseline check status.
+              </p>
             </div>
           </div>
+
+          <div class="row">
+            <span class="badge pass">Pass</span>
+            <span class="badge warning">Warning</span>
+            <span class="badge fail">Fail</span>
+            <span class="badge unknown">Unknown</span>
+            <span class="badge plain">Not in baseline</span>
+          </div>
         </div>
-        <div class="card" id="details"><p class="muted">Select a device or connection.</p></div>
-      </div>
+      </section>
+
+      <!-- Network map and details -->
+      <section class="dashboard-section">
+        <div class="section-heading">
+          <div>
+            <h2>Equipment topology</h2>
+            <p class="muted">
+              Follow the signal flow from sources through the network
+              and audio hub to production outputs.
+            </p>
+          </div>
+        </div>
+
+        <div class="grid map">
+          <div>
+            <div class="card map-panel">
+              <div class="section-heading">
+                <h2>Network topology</h2>
+                <span class="badge plain">Interactive map</span>
+              </div>
+
+              <div class="map-box" id="map"></div>
+            </div>
+
+            <!-- Add connection -->
+            <div class="card hidden" id="add-connection">
+              <h2>Add connection</h2>
+              <p class="muted">
+                Define a connection between two registered devices.
+              </p>
+
+              <div class="fields">
+                <div class="field">
+                  <label for="from">Source device</label>
+                  <select id="from" class="inline"></select>
+                </div>
+
+                <div class="field">
+                  <label for="to">Destination device</label>
+                  <select id="to" class="inline"></select>
+                </div>
+              </div>
+
+              <div class="row">
+                <input
+                  id="label"
+                  placeholder="Connection label (optional)"
+                >
+
+                <button class="btn primary" id="connect">
+                  + Connect devices
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Selected device / connection details -->
+          <aside class="card map-details-panel" id="details">
+            <div class="dashboard-eyebrow">INSPECTION PANEL</div>
+            <h2>Device details</h2>
+            <p class="muted">
+              Select a device or connection on the map to inspect
+              its information.
+            </p>
+          </aside>
+        </div>
+      </section>
+
     </main>
   </div>
+
   <script type="module" src="js/map.js"></script>
 </body>
 </html>

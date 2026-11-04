@@ -9,82 +9,226 @@
 <body>
   <div class="layout">
     <aside id="sidebar"></aside>
+
     <main>
+      <!-- Page header -->
       <div class="page-head">
         <div>
-          <h1>Baseline &amp; Pre-Show Check</h1>
-          <div class="muted">Approve a setup, map devices to it, then compare the live rig.</div>
+          <div class="dashboard-eyebrow">SHOW OPERATIONS / CONFIGURATION</div>
+          <h1>Baseline & Pre-Show Check</h1>
+          <div class="muted">
+            Define the approved equipment setup and verify it before showtime.
+          </div>
         </div>
+
         <div class="row">
-          <button class="btn hidden" id="new-baseline">New baseline</button>
-          <button class="btn primary hidden" id="run-check">Run pre-show check</button>
+          <button class="btn hidden" id="new-baseline">
+            + New baseline
+          </button>
+          <button class="btn primary hidden" id="run-check">
+            Run pre-show check
+          </button>
         </div>
       </div>
 
-      <p class="muted hidden" id="empty">No baselines yet.</p>
+      <!-- Empty state -->
+      <div class="card hidden" id="empty">
+        <h2>No baselines created</h2>
+        <p class="muted">
+          Create a baseline to define the expected equipment and settings
+          for your production.
+        </p>
+        <button class="btn primary hidden" id="empty-create">
+          Create your first baseline
+        </button>
+      </div>
 
-      <div id="baseline-area" class="hidden">
-        <div class="row" style="margin-bottom:16px">
-          <select id="baseline-select" class="inline" style="width:260px"></select>
-          <span class="badge" id="active-badge"></span>
-          <span class="muted" id="venue"></span>
-          <span class="row hidden" id="baseline-actions" style="margin-left:auto">
-            <button class="btn small primary" id="set-active">Set active</button>
-            <button class="btn small" id="add-slot">Add slot</button>
-            <button class="btn small danger" id="delete-baseline">Delete</button>
-          </span>
+      <!-- Baseline workspace -->
+      <section id="baseline-area" class="hidden">
+
+        <!-- Baseline selection -->
+        <div class="card baseline-overview">
+          <div class="section-heading">
+            <div>
+              <h2>Current configuration</h2>
+              <p class="muted">
+                Select a baseline to view and manage its equipment.
+              </p>
+            </div>
+            <span class="badge plain">Configuration</span>
+          </div>
+
+          <div class="row baseline-controls">
+            <select id="baseline-select" class="inline"></select>
+
+            <span class="badge" id="active-badge"></span>
+
+            <span class="muted" id="venue"></span>
+
+            <span class="row hidden" id="baseline-actions">
+              <button class="btn small primary" id="set-active">
+                Set active
+              </button>
+              <button class="btn small" id="add-slot">
+                + Add slot
+              </button>
+              <button class="btn small danger" id="delete-baseline">
+                Delete
+              </button>
+            </span>
+          </div>
         </div>
 
-        <div class="card">
-          <h2>Slots: baseline vs live</h2>
+        <!-- Baseline equipment comparison -->
+        <section class="dashboard-section">
+          <div class="section-heading">
+            <div>
+              <h2>Equipment configuration</h2>
+              <p class="muted">
+                Compare approved settings against the currently detected
+                device settings.
+              </p>
+            </div>
+          </div>
+
+          <div class="card table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Equipment role</th>
+                  <th>Mapped device</th>
+                  <th>Expected vs live settings</th>
+                  <th>Priority</th>
+                  <th id="status-head">Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="slots"></tbody>
+            </table>
+          </div>
+        </section>
+
+      </section>
+
+      <!-- Check history -->
+      <section class="dashboard-section card hidden" id="history-card">
+        <div class="section-heading">
+          <div>
+            <h2>Check history</h2>
+            <p class="muted">
+              Previous pre-show checks and their results.
+            </p>
+          </div>
+        </div>
+
+        <div class="table-container">
           <table>
-            <thead><tr><th>Role</th><th>Mapped device</th><th>Expected → live</th><th>Level</th><th id="status-head">Status</th><th></th></tr></thead>
-            <tbody id="slots"></tbody>
+            <thead>
+              <tr>
+                <th>Date and time</th>
+                <th>Baseline</th>
+                <th>Run by</th>
+                <th>Pass</th>
+                <th>Warning</th>
+                <th>Fail</th>
+                <th>Unknown</th>
+              </tr>
+            </thead>
+            <tbody id="history"></tbody>
           </table>
         </div>
-      </div>
+      </section>
 
-      <div class="card hidden" id="history-card">
-        <h2>Check history</h2>
-        <table>
-          <thead><tr><th>When</th><th>Baseline</th><th>Run by</th><th>Pass</th><th>Warning</th><th>Fail</th><th>Unknown</th></tr></thead>
-          <tbody id="history"></tbody>
-        </table>
-      </div>
     </main>
   </div>
 
+  <!-- New baseline dialog -->
   <dialog id="baseline-dialog">
     <form id="baseline-form">
-      <h2>New baseline</h2>
-      <p class="muted">The approved setup for a show.</p>
-      <div class="field"><label>Show name</label><input id="b-name" required></div>
-      <div class="fields">
-        <div class="field"><label>Venue</label><input id="b-venue"></div>
-        <div class="field"><label>Event date</label><input id="b-date" type="date"></div>
+      <h2>Create new baseline</h2>
+      <p class="muted">
+        Define the approved equipment setup for your production.
+      </p>
+
+      <div class="field">
+        <label for="b-name">Show name</label>
+        <input id="b-name" required placeholder="e.g. Kigali Live Concert">
       </div>
-      <label class="check"><input type="checkbox" id="b-live" checked> Capture current settings of all registered devices</label>
+
+      <div class="fields">
+        <div class="field">
+          <label for="b-venue">Venue</label>
+          <input id="b-venue" placeholder="Venue name">
+        </div>
+
+        <div class="field">
+          <label for="b-date">Event date</label>
+          <input id="b-date" type="date">
+        </div>
+      </div>
+
+      <label class="check">
+        <input type="checkbox" id="b-live" checked>
+        Capture current settings of all registered devices
+      </label>
+
       <div class="dialog-actions">
-        <button type="button" class="btn" data-close>Cancel</button>
-        <button class="btn primary">Create</button>
+        <button type="button" class="btn" data-close>
+          Cancel
+        </button>
+        <button class="btn primary">
+          Create baseline
+        </button>
       </div>
     </form>
   </dialog>
 
+  <!-- Add / edit baseline slot dialog -->
   <dialog id="slot-dialog">
     <form id="slot-form">
-      <h2 id="slot-title">Add slot</h2>
-      <p class="muted">A role in the show, e.g. "Main singer mic".</p>
-      <div class="field"><label>Role / label</label><input id="s-label" required></div>
-      <div class="fields">
-        <div class="field"><label>Type</label><select id="s-type"></select></div>
-        <div class="field"><label>Mapped device</label><select id="s-device"></select></div>
+      <h2 id="slot-title">Add equipment slot</h2>
+      <p class="muted">
+        Define an equipment role and its expected configuration.
+      </p>
+
+      <div class="field">
+        <label for="s-label">Equipment role / label</label>
+        <input id="s-label" required
+          placeholder="e.g. Main singer microphone">
       </div>
-      <div class="field"><label>Expected settings (key=value per line)</label><textarea id="s-params" rows="4"></textarea></div>
-      <label class="check"><input type="checkbox" id="s-critical" checked> Critical (a mismatch counts as Fail instead of Warning)</label>
+
+      <div class="fields">
+        <div class="field">
+          <label for="s-type">Equipment type</label>
+          <select id="s-type"></select>
+        </div>
+
+        <div class="field">
+          <label for="s-device">Mapped device</label>
+          <select id="s-device"></select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="s-params">
+          Expected settings (key=value per line)
+        </label>
+        <textarea id="s-params" rows="4"
+          placeholder="gain=+10 dB&#10;connector=XLR"></textarea>
+      </div>
+
+      <label class="check">
+        <input type="checkbox" id="s-critical" checked>
+        Critical equipment (a mismatch counts as Fail instead of Warning)
+      </label>
+
       <div class="dialog-actions">
-        <button type="button" class="btn" data-close>Cancel</button>
-        <button class="btn primary">Save</button>
+        <button type="button" class="btn" data-close>
+          Cancel
+        </button>
+        <button class="btn primary">
+          Save slot
+        </button>
       </div>
     </form>
   </dialog>

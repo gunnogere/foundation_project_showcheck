@@ -9,58 +9,162 @@
 <body>
   <div class="layout">
     <aside id="sidebar"></aside>
+
     <main>
+      <!-- Page heading -->
       <div class="page-head">
         <div>
-          <h1>Devices</h1>
-          <div class="muted">Discovered and manually registered gear.</div>
+          <div class="dashboard-eyebrow">SHOW OPERATIONS / EQUIPMENT</div>
+          <h1>Device Management</h1>
+          <div class="muted">
+            Discover, register and monitor connected production equipment.
+          </div>
         </div>
-        <button class="btn primary hidden" id="register">Register devices</button>
+
+        <button class="btn primary hidden" id="register">
+          + Register devices
+        </button>
       </div>
 
-      <div class="card">
-        <table>
-          <thead><tr><th>Name</th><th>Type</th><th>Source</th><th>Address</th><th>Online</th><th>Baseline slot</th><th></th></tr></thead>
-          <tbody id="devices"></tbody>
-        </table>
-      </div>
+      <!-- Device overview -->
+      <section class="dashboard-section">
+        <div class="section-heading">
+          <div>
+            <h2>Registered equipment</h2>
+            <p class="muted">
+              Devices currently registered in the ShowCheck system.
+            </p>
+          </div>
+          <span class="badge plain">Device inventory</span>
+        </div>
+
+        <div class="card table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Device</th>
+                <th>Type</th>
+                <th>Source</th>
+                <th>Address</th>
+                <th>Online</th>
+                <th>Baseline slot</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="devices"></tbody>
+          </table>
+        </div>
+      </section>
     </main>
   </div>
 
+  <!-- Register devices dialog -->
   <dialog id="register-dialog" class="wide">
     <h2>Register devices</h2>
-    <p class="muted">Scan the network, or add analogue gear by hand.</p>
+    <p class="muted">
+      Discover equipment automatically or register analogue gear manually.
+    </p>
+
     <div class="tabs">
       <button class="active" data-tab="auto">Auto-discovery</button>
       <button data-tab="manual">Manual / Analogue</button>
     </div>
 
+    <!-- Automatic discovery -->
     <div id="tab-auto">
-      <button class="btn" id="scan">Scan network</button>
-      <div class="chips" id="filters">
-        <button class="chip active" data-filter="all">All<span class="count"></span></button>
-        <button class="chip" data-filter="bluetooth">Bluetooth<span class="count"></span></button>
-        <button class="chip" data-filter="lan">Network (LAN / Wi-Fi)<span class="count"></span></button>
-        <button class="chip" data-filter="rf" title="Future work: needs an RF receiver">RF Receiver <em>not available</em></button>
+      <div class="section-heading">
+        <div>
+          <h2>Network discovery</h2>
+          <p class="muted">
+            Search your network and nearby Bluetooth devices.
+          </p>
+        </div>
       </div>
+
+      <button class="btn primary" id="scan">Scan network</button>
+
+      <div class="chips" id="filters">
+        <button class="chip active" data-filter="all">
+          All<span class="count"></span>
+        </button>
+
+        <button class="chip" data-filter="bluetooth">
+          Bluetooth<span class="count"></span>
+        </button>
+
+        <button class="chip" data-filter="lan">
+          Network (LAN / Wi-Fi)<span class="count"></span>
+        </button>
+
+        <button class="chip" data-filter="rf"
+          title="Future work: needs an RF receiver">
+          RF Receiver <em>not available</em>
+        </button>
+      </div>
+
       <p class="muted" id="scan-summary"></p>
+
       <ul class="scan-list" id="found"></ul>
-      <p class="muted">Adoptable: LAN / Wi-Fi hosts answering PJLink (projectors), Shure control or RTSP (cameras), and Bluetooth headsets and speakers. Wireless gear on UHF/RF (mics, in-ears) is not detected yet: that needs an RF receiver, planned as future work.</p>
+
+      <div class="card">
+        <h2>Discovery limitations</h2>
+        <p class="muted">
+          Adoptable devices include LAN / Wi-Fi hosts answering PJLink
+          (projectors), Shure control or RTSP (cameras), and Bluetooth
+          headsets and speakers.
+        </p>
+        <p class="muted">
+          Wireless equipment using UHF/RF, including microphones and
+          in-ear monitors, is not detected yet. This requires an
+          additional RF receiver.
+        </p>
+      </div>
+
       <div class="dialog-actions">
         <button class="btn" data-close>Close</button>
-        <button class="btn primary" id="register-picked" disabled>Register selected (0)</button>
+        <button class="btn primary" id="register-picked" disabled>
+          Register selected (0)
+        </button>
       </div>
     </div>
 
+    <!-- Manual registration -->
     <form id="tab-manual" class="hidden">
-      <div class="field"><label>Name</label><input id="m-name" required placeholder="e.g. Stage monitor wedge"></div>
-      <div class="fields">
-        <div class="field"><label>Type</label><select id="m-type"></select></div>
-        <div class="field"><label>Manufacturer</label><input id="m-manufacturer"></div>
-        <div class="field"><label>Model</label><input id="m-model"></div>
+      <h2>Manual device registration</h2>
+
+      <div class="field">
+        <label for="m-name">Device name</label>
+        <input id="m-name" required placeholder="e.g. Stage monitor wedge">
       </div>
-      <div class="field"><label>Settings (one key=value per line)</label><textarea id="m-params" rows="3" placeholder="gain=+10 dB&#10;connector=XLR"></textarea></div>
-      <p class="muted">Analogue devices cannot be verified automatically, so they show as Unknown in checks.</p>
+
+      <div class="fields">
+        <div class="field">
+          <label for="m-type">Device type</label>
+          <select id="m-type"></select>
+        </div>
+
+        <div class="field">
+          <label for="m-manufacturer">Manufacturer</label>
+          <input id="m-manufacturer">
+        </div>
+
+        <div class="field">
+          <label for="m-model">Model</label>
+          <input id="m-model">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="m-params">Settings (one key=value per line)</label>
+        <textarea id="m-params" rows="3"
+          placeholder="gain=+10 dB&#10;connector=XLR"></textarea>
+      </div>
+
+      <p class="muted">
+        Analogue devices cannot be verified automatically, so they show
+        as Unknown in checks.
+      </p>
+
       <div class="dialog-actions">
         <button type="button" class="btn" data-close>Cancel</button>
         <button class="btn primary">Register device</button>
@@ -68,15 +172,28 @@
     </form>
   </dialog>
 
+  <!-- Edit device dialog -->
   <dialog id="edit-dialog">
     <form id="edit-form">
-      <h2 id="edit-title"></h2>
-      <p class="muted">Simulated live state. Change it to test how checks react.</p>
-      <label class="check"><input type="checkbox" id="e-online"> Device is online</label>
-      <div class="field"><label>Live settings</label><textarea id="e-params" rows="5"></textarea></div>
+      <h2 id="edit-title">Edit device</h2>
+
+      <p class="muted">
+        Update the simulated live state and device settings.
+      </p>
+
+      <label class="check">
+        <input type="checkbox" id="e-online">
+        Device is online
+      </label>
+
+      <div class="field">
+        <label for="e-params">Live settings</label>
+        <textarea id="e-params" rows="5"></textarea>
+      </div>
+
       <div class="dialog-actions">
         <button type="button" class="btn" data-close>Cancel</button>
-        <button class="btn primary">Save</button>
+        <button class="btn primary">Save changes</button>
       </div>
     </form>
   </dialog>

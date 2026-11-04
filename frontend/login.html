@@ -3,26 +3,78 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Sign in - ShowCheck</title>
+  <title>Sign In - ShowCheck</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
-  <div class="login">
-    <form class="card" id="login-form">
-      <h1>Show<span>Check</span></h1>
-      <p class="muted">Pre-show readiness verification</p>
-      <div class="field">
-        <label for="email">Email</label>
-        <input id="email" type="email" required autocomplete="username">
+
+<body class="login-page">
+  <main class="login-container">
+
+    <section class="login-card">
+
+      <div class="login-brand">
+        <div class="login-logo">SC</div>
+
+        <div>
+          <h1>ShowCheck</h1>
+          <p class="muted">Production readiness monitoring</p>
+        </div>
       </div>
-      <div class="field">
-        <label for="password">Password</label>
-        <input id="password" type="password" required autocomplete="current-password">
+
+      <div class="login-heading">
+        <div class="dashboard-eyebrow">SYSTEM ACCESS</div>
+        <h2>Welcome back</h2>
+        <p class="muted">
+          Sign in to monitor your production environment.
+        </p>
       </div>
-      <p class="error" id="error"></p>
-      <button class="btn primary" style="width:100%" id="submit">Sign in</button>
-    </form>
-  </div>
+
+      <form id="login-form">
+
+        <div class="field">
+          <label for="email">Email address</label>
+          <input
+            id="email"
+            type="email"
+            autocomplete="username"
+            required
+            placeholder="Enter your email"
+          >
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <input
+            id="password"
+            type="password"
+            autocomplete="current-password"
+            required
+            placeholder="Enter your password"
+          >
+        </div>
+
+        <p id="error" class="error-message" role="alert"></p>
+
+        <button
+          type="submit"
+          class="btn primary login-submit"
+          id="submit"
+        >
+          Sign in
+        </button>
+
+      </form>
+
+      <div class="login-footer">
+        <p class="muted">
+          ShowCheck · Live production equipment monitoring
+        </p>
+      </div>
+
+    </section>
+
+  </main>
+
   <script type="module" src="js/login.js"></script>
 </body>
 </html>
