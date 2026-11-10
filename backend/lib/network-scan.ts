@@ -1,11 +1,11 @@
 import os from "node:os";
-import net from "node:net";
+import net from "node:net";  
 import dgram from "node:dgram";
 import dns from "node:dns/promises";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { readFile } from "node:fs/promises";
-import type { DeviceType } from "@prisma/client";
+import type { DeviceType } from "@prisma/client"; // 
 
 const run = promisify(execFile);
 
@@ -21,11 +21,14 @@ export type NetworkHost = {
   adoptable: boolean;
   reason?: string;
   via: "lan" | "bluetooth";
-  kind?: string;
-  rssi?: number;
+  kind?: string; // e.g., "phone", "router", "camera"
+  rssi?: number; // Received Signal Strength Indicator, in dBm
 };
 
 // A host is only adoptable if it answers a protocol we know how to talk to.
+//port 4352: PJLink projector
+//port 2202: Shure network receiver
+//port 554: RTSP camera
 const SIGNATURES: { port: number; type: DeviceType; manufacturer: string; model: string }[] = [
   { port: 4352, type: "PROJECTOR", manufacturer: "Unknown", model: "PJLink projector" },
   { port: 2202, type: "MICROPHONE", manufacturer: "Shure", model: "Shure network receiver" },
@@ -47,6 +50,7 @@ function localNetwork() {
   return null;
 }
 
+// Utility function to limit concurrency when mapping over an array of items.
 async function mapLimit<T, R>(items: T[], limit: number, fn: (x: T) => Promise<R>): Promise<R[]> {
   const out: R[] = new Array(items.length);
   let next = 0;
@@ -61,9 +65,10 @@ async function mapLimit<T, R>(items: T[], limit: number, fn: (x: T) => Promise<R
   return out;
 }
 
+// Pings an IP address to check if it is reachable. Returns true if the host responds, false otherwise.
 async function ping(ip: string) {
   try {
-    await run("ping", ["-c", "1", "-W", "1", ip]);
+    await run("ping", ["-c", "1", "-W", "1", ip]); // Send a single ping with a 1-second timeout
     return true;
   } catch {
     return false;
@@ -85,6 +90,7 @@ async function arpTable() {
   return macs;
 }
 
+// Checks if a TCP port is open on a given IP address. Resolves to true if the port is open, false otherwise.
 const portOpen = (ip: string, port: number) =>
   new Promise<boolean>((resolve) => {
     const s = net.connect({ host: ip, port, timeout: 800 });
@@ -96,7 +102,6 @@ const portOpen = (ip: string, port: number) =>
 // ---------- Device names ----------
 // Phones answer mDNS (Apple: "Joshuas-iPhone"), Windows PCs answer NetBIOS ("DESKTOP-PC"),
 // and routers often know DHCP hostnames via reverse DNS.
-
 function udpQuery(ip: string, port: number, packet: Buffer): Promise<Buffer | null> {
   return new Promise((resolve) => {
     const sock = dgram.createSocket("udp4");
@@ -137,6 +142,8 @@ function readName(buf: Buffer, start: number) {
   return { name: labels.join("."), end: end < 0 ? off : end };
 }
 
+// Queries the mDNS service on the given IP to retrieve the device's hostname, if available. Returns undefined if not found.
+//Multicast DNS (mDNS) is used by devices to resolve their hostnames on the local network without a central DNS server.
 async function mdnsName(ip: string) {
   const labels = [...ip.split(".").reverse(), "in-addr", "arpa"].map((l) => Buffer.concat([Buffer.from([l.length]), Buffer.from(l)]));
   const query = Buffer.concat([Buffer.from([0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0]), ...labels, Buffer.from([0, 0, 12, 0x80, 1])]);
@@ -149,6 +156,7 @@ async function mdnsName(ip: string) {
   return readName(res, answerName.end + 10).name;
 }
 
+// Queries the NetBIOS service on the given IP to retrieve the device's hostname, if available. Returns undefined if not found.
 async function netbiosName(ip: string) {
   const query = Buffer.concat([
     Buffer.from([0x12, 0x34, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0x20]),
@@ -168,6 +176,7 @@ async function netbiosName(ip: string) {
   return undefined;
 }
 
+// Performs a reverse DNS lookup on the given IP address. Returns the hostname if found, or undefined if not found or on timeout.
 const reverseDns = (ip: string) =>
   Promise.race([dns.reverse(ip).then((n) => n[0]), new Promise<undefined>((r) => setTimeout(r, 1000))]).catch(() => undefined);
 
@@ -178,6 +187,7 @@ async function deviceName(ip: string) {
   return real?.split(".")[0] || undefined;
 }
 
+// Scans the local network for devices, returning their subnet and a list of discovered hosts with details.
 export async function scanNetwork(): Promise<{ subnet: string | null; hosts: NetworkHost[] }> {
   const network = localNetwork();
   if (!network) return { subnet: null, hosts: [] };
