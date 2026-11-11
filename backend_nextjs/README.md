@@ -1,5 +1,7 @@
 # ShowCheck Backend
 
+> Archived Next.js implementation. The active Python/SQLite backend is in `../backend`; see the repository's [setup guide](../README.md).
+
 The backend is the JSON API behind ShowCheck. It handles login and roles, stores devices, baselines, checks and incidents in MySQL, runs the pre-show check, and scans the local network and Bluetooth for devices.
 
 It is a Next.js app used **only for API routes** (there is no UI here). The UI lives in `../frontend`.

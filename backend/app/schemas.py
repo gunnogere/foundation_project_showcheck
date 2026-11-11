@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -55,14 +55,14 @@ class DeviceUpdate(InputModel):
 class BaselineCreate(InputModel):
     name: str = Field(min_length=1)
     venue: str | None = None
-    event_date: datetime | None = None
+    event_date: datetime | date | None = None
     from_live: bool = False
 
 
 class BaselineUpdate(InputModel):
     name: str | None = Field(default=None, min_length=1)
     venue: str | None = None
-    event_date: datetime | None = None
+    event_date: datetime | date | None = None
     active: bool | None = None
 
 

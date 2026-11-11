@@ -176,7 +176,7 @@ Wireless mics and in-ear systems transmit on UHF/VHF (roughly 470-960 MHz) or pr
 
 - **An RF receiver** (for example an SDR dongle such as an RTL-SDR, or a vendor receiver with a network API) connected to the backend machine.
 - **A spectrum scan** in the backend that checks whether each mic's baseline frequency is actually transmitting and flags interference or a wrong frequency.
-- **A new scanner** next to the network scan in `backend/lib/network-scan.ts`, feeding the same Register devices dialog, so the rest of the app doesn't change.
+- **A new scanner** next to the network scan in `backend/app/scanner.py`, feeding the same Register devices dialog, so the rest of the app doesn't change.
 
 A spectrum scan shows that a signal exists on a frequency, not which device or settings it has. Device identity and settings would still come from the mic receiver's network interface.
 

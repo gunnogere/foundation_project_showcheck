@@ -1,7 +1,7 @@
 import asyncio
 import os
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, time, timedelta, timezone
 
 import jwt
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
@@ -42,7 +42,6 @@ PERMISSIONS = {
     "logIncident": {"ADMIN", "TECH_DIRECTOR", "OPERATOR"},
     "resolveIncident": {"ADMIN", "TECH_DIRECTOR"},
 }
-SEVERITIES = {"INFO", "WARNING", "CRITICAL"}
 
 
 def _iso(value):
@@ -51,6 +50,12 @@ def _iso(value):
     if value.tzinfo is None:
         value = value.replace(tzinfo=timezone.utc)
     return value.isoformat(timespec="milliseconds").replace("+00:00", "Z")
+
+
+def _as_datetime(value):
+    if isinstance(value, date) and not isinstance(value, datetime):
+        return datetime.combine(value, time.min, tzinfo=timezone.utc)
+    return value
 
 
 def _user_json(user, include_created=False):
@@ -201,7 +206,9 @@ def _active_status(db: Session):
 def create_app(secret_key=None, database_url=None, cookie_secure=None):
     engine = build_engine(database_url)
     session_factory = build_session_factory(engine)
-    secret = secret_key or os.getenv("JWT_SECRET") or "local-development-secret-change-me-32-bytes-minimum"
+    secret = secret_key or os.getenv("JWT_SECRET")
+    if not secret:
+        raise RuntimeError("JWT_SECRET must be set in the environment or backend .env file")
     secure_cookie = cookie_secure if cookie_secure is not None else os.getenv("COOKIE_SECURE", "false").lower() == "true"
 
     @asynccontextmanager
@@ -429,7 +436,7 @@ def create_app(secret_key=None, database_url=None, cookie_secure=None):
 
     @application.post("/api/baselines")
     def create_baseline(payload: BaselineCreate, _editor: User = Depends(permission("editBaseline")), db: Session = Depends(get_db)):
-        baseline = Baseline(name=payload.name, venue=payload.venue or None, event_date=payload.event_date)
+        baseline = Baseline(name=payload.name, venue=payload.venue or None, event_date=_as_datetime(payload.event_date))
         if payload.from_live:
             devices = db.scalars(select(Device).order_by(Device.id)).all()
             baseline.items = [BaselineItem(label=device.name, type=device.type, expected_params=device.params or {}, device=device) for device in devices]
@@ -447,6 +454,8 @@ def create_app(secret_key=None, database_url=None, cookie_secure=None):
             raise HTTPException(status_code=400, detail="Invalid id") from None
         baseline = _get_or_404(db, Baseline, parsed_id, "Baseline not found")
         changes = payload.model_dump(exclude_unset=True)
+        if "event_date" in changes:
+            changes["event_date"] = _as_datetime(changes["event_date"])
         if changes.get("active"):
             db.execute(update(Baseline).values(active=False))
         for key, value in changes.items():

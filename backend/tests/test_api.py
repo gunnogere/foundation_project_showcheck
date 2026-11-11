@@ -1,10 +1,16 @@
+import os
+
 import bcrypt
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
+os.environ.setdefault("JWT_SECRET", "test-import-secret-at-least-32-bytes")
+
+from app.database import build_engine, build_session_factory
 from app.main import create_app
-from app.models import User
+from app.main import _active_status
+from app.models import Baseline, Device, User
 from app.security import hash_password
 
 
@@ -64,7 +70,8 @@ def test_devices_baselines_checks_and_incident_lifecycle(client):
         "identifier": "PROJECTOR-1", "params": {"input": "HDMI 2"},
     }).json()
     assert device["ipAddress"] is None
-    baseline = client.post("/api/baselines", json={"name": "Evening show"}).json()
+    baseline = client.post("/api/baselines", json={"name": "Evening show", "eventDate": "2026-11-12"}).json()
+    assert baseline["eventDate"].startswith("2026-11-12T")
     item = client.post(f"/api/baselines/{baseline['id']}/items", json={
         "label": "Main screen", "type": "PROJECTOR", "critical": True,
         "expectedParams": {"input": "HDMI 1"}, "deviceId": device["id"],
@@ -134,3 +141,21 @@ def test_discovery_ports_are_saved_and_used_by_local_scan(client, monkeypatch):
     assert result.status_code == 200
     assert calls["ports"]["pjlink"] == 4353
     assert result.json()["bluetooth"]["available"] is False
+
+
+def test_demo_seed_keeps_existing_show_states(monkeypatch, tmp_path):
+    database_url = f"sqlite:///{tmp_path / 'seed.db'}"
+    monkeypatch.setenv("DATABASE_URL", database_url)
+    from app.seed import seed
+
+    seed()
+    engine = build_engine(database_url)
+    with build_session_factory(engine)() as db:
+        assert db.scalar(select(User.id).where(User.email == "admin@showcheck.test")) is not None
+        assert db.scalar(select(Device.id).where(Device.identifier == "DMX-BAR-2")) is not None
+        assert db.scalar(select(Baseline.id).where(Baseline.active.is_(True))) is not None
+        status = _active_status(db)
+        assert status["counts"]["WARNING"] == 1
+        assert status["counts"]["FAIL"] == 1
+        assert status["counts"]["UNKNOWN"] == 1
+    engine.dispose()
