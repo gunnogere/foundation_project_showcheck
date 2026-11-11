@@ -1,5 +1,4 @@
 import ipaddress
-import os
 import re
 import socket
 import subprocess
@@ -32,7 +31,10 @@ def _local_network():
                 interface = ipaddress.IPv4Interface(f"{address.address}/{address.netmask}")
             except (TypeError, ValueError):
                 continue
-            return address.address, address.address, interface.network
+            link_family = getattr(psutil, "AF_LINK", getattr(socket, "AF_PACKET", None))
+            mac = next((entry.address for entry in addresses if entry.family == link_family), None)
+            local_subnet = ipaddress.IPv4Network(f"{address.address}/24", strict=False)
+            return address.address, mac, local_subnet
     return None
 
 
@@ -175,7 +177,7 @@ def scan_network(ports=None):
     network_data = _local_network()
     if not network_data:
         return {"subnet": None, "hosts": []}
-    self_ip, self_ip_again, subnet = network_data
+    self_ip, self_mac, subnet = network_data
     addresses = [str(address) for address in subnet.hosts()]
     with ThreadPoolExecutor(max_workers=64) as pool:
         alive = [ip for ip, is_alive in zip(addresses, pool.map(_ping, addresses)) if is_alive or ip == self_ip]
@@ -183,16 +185,7 @@ def scan_network(ports=None):
     ports = ports or DEFAULT_PORTS
 
     def inspect(ip):
-        mac = psutil.net_if_addrs() and None
-        if ip == self_ip:
-            for addresses_on_interface in psutil.net_if_addrs().values():
-                for address in addresses_on_interface:
-                    if address.family == socket.AF_INET and address.address == self_ip:
-                        mac = address.address
-                        break
-                if mac:
-                    break
-        mac = macs.get(ip) or (mac if ip == self_ip else None)
+        mac = self_mac if ip == self_ip else macs.get(ip)
         identifier = f"NET-{mac or ip}"
         params = {"mac": mac} if mac else {}
         base = {"identifier": identifier, "ipAddress": ip, "macAddress": mac, "params": params, "via": "lan"}

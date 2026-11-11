@@ -1,6 +1,10 @@
 {
     "chat.tools.terminal.autoApprove": {
         "npx tsc": true,
-        "test": true
+        "test": true,
+        "/^python3 -m compileall -q backend/app/schemas\\.py backend/app/main\\.py$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
     }
 }
