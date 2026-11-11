@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 def to_camel(value: str) -> str:
@@ -20,13 +20,13 @@ Severity = Literal["INFO", "WARNING", "CRITICAL"]
 
 
 class LoginInput(InputModel):
-    email: EmailStr
+    email: str = Field(pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
     password: str = Field(min_length=1)
 
 
 class UserCreate(InputModel):
     name: str = Field(min_length=1)
-    email: EmailStr
+    email: str = Field(pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
     password: str = Field(min_length=8)
     role: Role
 

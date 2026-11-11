@@ -201,7 +201,7 @@ def _active_status(db: Session):
 def create_app(secret_key=None, database_url=None, cookie_secure=None):
     engine = build_engine(database_url)
     session_factory = build_session_factory(engine)
-    secret = secret_key or os.getenv("JWT_SECRET") or "local-development-secret-change-me"
+    secret = secret_key or os.getenv("JWT_SECRET") or "local-development-secret-change-me-32-bytes-minimum"
     secure_cookie = cookie_secure if cookie_secure is not None else os.getenv("COOKIE_SECURE", "false").lower() == "true"
 
     @asynccontextmanager

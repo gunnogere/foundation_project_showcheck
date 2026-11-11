@@ -83,6 +83,28 @@
 
       <button class="btn primary" id="scan">Scan network</button>
 
+      <div id="discovery-settings" class="card hidden">
+        <h3>Adoptable protocol ports</h3>
+        <p class="muted">These ports identify the supported projector, Shure receiver and RTSP camera protocols.</p>
+        <form id="discovery-ports-form">
+          <div class="fields">
+            <div class="field">
+              <label for="port-pjlink">PJLink projector</label>
+              <input id="port-pjlink" type="number" min="1" max="65535" required>
+            </div>
+            <div class="field">
+              <label for="port-shure">Shure control receiver</label>
+              <input id="port-shure" type="number" min="1" max="65535" required>
+            </div>
+            <div class="field">
+              <label for="port-rtsp">RTSP camera</label>
+              <input id="port-rtsp" type="number" min="1" max="65535" required>
+            </div>
+          </div>
+          <button class="btn small" type="submit">Save ports</button>
+        </form>
+      </div>
+
       <div class="chips" id="filters">
         <button class="chip active" data-filter="all">
           All<span class="count"></span>

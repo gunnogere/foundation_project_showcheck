@@ -156,6 +156,24 @@ $("#edit-form").onsubmit = guard(async (e) => {
 // ---------- Register dialog ----------
 if (manage) {
   $("#register").classList.remove("hidden");
+  $("#discovery-settings").classList.remove("hidden");
+
+  api("/discovery/ports").then(({ ports }) => {
+    ports.forEach(({ key, port }) => {
+      const input = $("#port-" + key);
+      if (input) input.value = port;
+    });
+  }).catch((error) => toast(error.message, "error"));
+
+  $("#discovery-ports-form").onsubmit = guard(async (e) => {
+    e.preventDefault();
+    const ports = Object.fromEntries(["pjlink", "shure", "rtsp"].map((key) => [
+      key,
+      Number($("#port-" + key).value)
+    ]));
+    await api("/discovery/ports", { method: "PATCH", body: { ports } });
+    toast("Discovery ports saved", "success");
+  });
 }
 
 $("#register").onclick = () =>
