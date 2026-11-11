@@ -57,16 +57,16 @@ A baseline maps *roles* to devices. For example, in the baseline Mic 1 is "Main 
 | Operator | Run checks and log incidents |
 | Viewer | Read-only |
 
-**Important:** the scan results are real. The backend (Linux only) scans the local network (LAN / Wi-Fi) and nearby Bluetooth at the same time, and shows each device with its name (for example "Jeremiahs-iPhone" or "DESKTOP-PC"), MAC address and a badge saying where it was found. Here is what each check does:
+**Important:** the scan results are real. The backend (Linux only) scans the server's local /24 network and nearby Bluetooth at the same time, and shows each device with its name, MAC address and a badge saying where it was found. Technical Directors can configure the PJLink, Shure control and RTSP ports in the Devices discovery dialog. Here is what each check does:
 
 | Check | What it does | Result |
 |---|---|---|
 | Ping sweep | Pings every address on the local /24 subnet | Lists every host that answers |
 | ARP lookup | Reads each host's MAC address | Adds the MAC address |
 | Name lookup (mDNS, NetBIOS, reverse DNS) | Asks the host for its name | Shows "Jeremiahs-iPhone" instead of just an IP |
-| PJLink probe (port 4352) | Asks the host if it speaks PJLink | Projector, **adoptable** |
-| Shure control probe (port 2202) | Asks the host if it speaks Shure control | Mic receiver, **adoptable** |
-| RTSP probe (port 554) | Asks the host if it serves a video stream | Camera, **adoptable** |
+| PJLink probe (default port 4352) | Checks whether the configured port is open | Projector, **adoptable** |
+| Shure control probe (default port 2202) | Checks whether the configured port is open | Mic receiver, **adoptable** |
+| RTSP probe (default port 554) | Checks whether the configured port is open | Camera, **adoptable** |
 | Any other LAN / Wi-Fi host (laptops, phones) | No supported protocol answered | Shown as **Not adoptable** |
 | Bluetooth scan (about 8 seconds) | Listens for nearby Bluetooth devices (needs BlueZ's `bluetoothctl` and a Bluetooth adapter) | Headsets and speakers (for example silent disco headsets), **adoptable**; phones and other devices **not adoptable** |
 | UHF/RF wireless signals | Needs an RF receiver | Not yet, see [Future work](#future-work) |
@@ -78,26 +78,24 @@ Wireless gear on UHF/RF can't be scanned yet. See [Future work](#future-work).
 ## How it's built
 
 ```
-backend/    Next.js API (port 3000) + Prisma + MySQL. Login, roles, check logic.
-frontend/   Plain HTML, CSS and JavaScript (port 3001). No Node.js or build step.
+backend/         FastAPI JSON API (port 3000) + SQLAlchemy + local SQLite.
+frontend/        Plain HTML, CSS and JavaScript (port 3001). No build step.
 ```
 
-We kept the two apart so the frontend can be worked on by anyone who knows HTML/JS, without touching Node. The frontend just calls the backend's `/api` routes.
+The frontend calls the Python backend's `/api` routes. The director's machine runs the backend and owns the SQLite file; other users connect over the venue Wi-Fi.
 
 ## Running it on your machine
 
-Tested on **Ubuntu Linux** (Node.js 20 or newer, Python 3). Other Linux distributions should work the same way. We haven't tested macOS or Windows.
-
-There is no database to install. The app connects to our shared online MySQL database, and the tables and demo data are already there.
+Tested on **Ubuntu Linux** with Python 3.11 or newer. Network and Bluetooth discovery uses Linux tools (`ping`, `/proc/net/arp`, and `bluetoothctl`). The SQLite database is a local file created on the director's machine.
 
 ### 1. Install what you need
 
 ```bash
 sudo apt update
-sudo apt install -y git python3
+sudo apt install -y git python3 python3-venv iputils-ping bluez
 ```
 
-Node.js 20+ is needed for the backend only. If `node -v` shows something older, or nothing, install it from https://nodejs.org or with `nvm`.
+No Node.js installation is needed for the Python backend or frontend.
 
 ### 2. Get the code
 
@@ -106,35 +104,42 @@ git clone git@github.com:gunnogere/foundation_project_showcheck.git
 cd foundation_project_showcheck
 ```
 
-### 3. Add the database settings
-
-The database login lives in `backend/config.env`. It holds a password, so it is **not in the repo**. Ask me for the file and put it in the `backend/` folder. (`backend/config.env.example` shows what it looks like.) Never commit it.
-
-### 4. Start the backend
+### 3. Configure and start the backend
 
 ```bash
 cd backend
-npm install
-npm run setup       # reads config.env and creates backend/.env for you
-npm run dev         # starts the API on http://localhost:3000
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+python3 -c 'import secrets; print(secrets.token_hex(32))'
 ```
 
-Leave that terminal running.
+Put the generated value in `JWT_SECRET` in `.env`. Keep that file private. The default `DATABASE_URL` stores the database at `backend/data/showcheck.db`.
 
-### 5. Start the frontend
+Seed the demo users and show once, then start the server:
+
+```bash
+python -m app.seed
+uvicorn app.main:app --host 0.0.0.0 --port 3000
+```
+
+All demo accounts use `password123`; change them before real use. The password hashes use Argon2id.
+
+### 4. Start the frontend
 
 Open a second terminal:
 
 ```bash
 cd frontend
-python3 -m http.server 3001
+python3 -m http.server 3001 --bind 0.0.0.0
 ```
 
-Now open **http://localhost:3001** in your browser. Use `localhost`, not `127.0.0.1`, otherwise the login cookie won't be sent.
+On the director's machine, open **http://localhost:3001**. On a phone or another computer on the venue Wi-Fi, open **http://DIRECTOR-IP:3001**. The frontend uses the hostname in the page URL to reach the API on port 3000, so `localhost` on a phone is not the director's machine. Set `FRONTEND_ORIGINS` in `backend/.env` to include the frontend origin used by phones, then restart the backend. Ensure the venue firewall allows ports 3000 and 3001 from the venue network.
 
-### 6. Log in
+### 5. Log in
 
-The seed creates one user per role. **The default password for all of them is `password123`.**
+The seed creates one user per role. **The demo password for all of them is `password123`.**
 
 | Email | Role |
 |---|---|
@@ -154,12 +159,13 @@ The demo show ("Kigali Gala Night") has a projector on the wrong input (Warning)
 | Change how a page looks | `frontend/css/style.css` |
 | Change a page's behaviour | `frontend/js/<page>.js` (the page name matches the HTML file) |
 | Point the frontend at a different backend | `frontend/js/config.js` |
-| Change who is allowed to do what | `backend/lib/rbac.ts` (and the copy in `frontend/js/common.js`, which only hides buttons) |
-| Change the Pass/Warning/Fail rules | `backend/lib/evaluate.ts` |
-| Change the fake demo devices (used by the seed) | `backend/lib/discovery.ts` |
-| Change the real network scan | `backend/lib/network-scan.ts` |
-| Change the Bluetooth scan | `backend/lib/bluetooth-scan.ts` |
-| Change the database tables | `backend/prisma/schema.prisma`, then `npm run db:push` (this changes the shared database, so tell the team first) |
+| Change who is allowed to do what | `backend/app/main.py` and the UI-only copy in `frontend/js/common.js` |
+| Change Pass/Warning/Fail rules | `backend/app/main.py` (`_active_status`) |
+| Change demo users and devices | `backend/app/seed.py` |
+| Change network and Bluetooth discovery | `backend/app/scanner.py` |
+| Change default adoptable ports | `backend/app/scanner.py`; current values can also be edited in Devices > Auto-discovery |
+| Change SQLite tables | `backend/app/models.py` |
+| Run backend endpoint tests | `cd backend && .venv/bin/pytest -q` |
 
 ## Future work
 
@@ -169,16 +175,16 @@ Wireless mics and in-ear systems transmit on UHF/VHF (roughly 470-960 MHz) or pr
 
 - **An RF receiver** (for example an SDR dongle such as an RTL-SDR, or a vendor receiver with a network API) connected to the backend machine.
 - **A spectrum scan** in the backend that checks whether each mic's baseline frequency is actually transmitting and flags interference or a wrong frequency.
-- **A new scanner** next to the network scan in `backend/lib/network-scan.ts`, feeding the same Register devices dialog, so the rest of the app doesn't change.
+- **A new scanner** next to the network scan in `backend/app/scanner.py`, feeding the same Register devices dialog, so the rest of the app doesn't change.
 
 A spectrum scan shows that a signal exists on a frequency, not which device or settings it has. Device identity and settings would still come from the mic receiver's network interface.
 
 ## Troubleshooting
 
-- **Login page says it can't log in, or pages stay empty:** check that the backend terminal is running and that you opened `http://localhost:3001`, not `127.0.0.1`.
-- **`npm run setup` says config.env is missing:** you need the file from me, placed in `backend/`.
-- **The API can't reach the database:** check your internet connection and that the values in `backend/config.env` are right, then run `npm run setup` again.
-- **The database is empty or was reset:** run `npm run db:push` and then `npm run db:seed` in `backend/` to recreate the tables and demo data.
-- **Port already in use:** stop the other process, or change the port (and update `frontend/js/config.js` and `FRONTEND_ORIGIN`).
+- **Login page says it can't log in, or pages stay empty:** check the backend is running, `JWT_SECRET` is set, and `FRONTEND_ORIGINS` includes the exact frontend origin.
+- **Other users cannot connect:** use the director machine's LAN IP/hostname, bind both servers to `0.0.0.0`, and allow ports 3000 and 3001 through its firewall.
+- **The database is empty:** run `python -m app.seed` from `backend/`.
+- **Bluetooth is unavailable:** install BlueZ and ensure the director machine has an enabled Bluetooth adapter.
+- **Port already in use:** stop the other process or change the port in the server command and `frontend/js/config.js`.
 
 
