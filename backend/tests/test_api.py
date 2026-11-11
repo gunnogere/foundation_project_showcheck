@@ -1,6 +1,5 @@
 import os
 
-import bcrypt
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
@@ -48,19 +47,6 @@ def test_authentication_permissions_and_modern_password_hash(client):
     sign_in(client, "viewer@example.test", "viewer-password")
     assert client.get("/api/users").status_code == 403
     assert client.post("/api/devices", json={"name": "No", "type": "OTHER"}).status_code == 403
-
-
-def test_legacy_bcrypt_hash_upgrades_to_argon2id_on_login(client):
-    legacy_hash = bcrypt.hashpw(b"legacy-password", bcrypt.gensalt()).decode()
-    with client.app.state.session_factory() as db:
-        db.add(User(name="Legacy", email="legacy@example.test", role="OPERATOR", password_hash=legacy_hash))
-        db.commit()
-
-    response = sign_in(client, "legacy@example.test", "legacy-password")
-    assert response.status_code == 200
-    with client.app.state.session_factory() as db:
-        stored = db.scalar(select(User).where(User.email == "legacy@example.test")).password_hash
-    assert stored.startswith("$argon2id$")
 
 
 def test_devices_baselines_checks_and_incident_lifecycle(client):

@@ -1,6 +1,6 @@
 # ShowCheck Python Backend
 
-FastAPI JSON API, SQLite storage, and Linux LAN/Bluetooth discovery. The previous Next.js implementation remains in `../backend_nextjs`.
+FastAPI JSON API, SQLite storage, Argon2id password hashing, and Linux LAN/Bluetooth discovery.
 
 ## Setup
 

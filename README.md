@@ -79,7 +79,6 @@ Wireless gear on UHF/RF can't be scanned yet. See [Future work](#future-work).
 
 ```
 backend/         FastAPI JSON API (port 3000) + SQLAlchemy + local SQLite.
-backend_nextjs/  Preserved Next.js implementation from the earlier version.
 frontend/        Plain HTML, CSS and JavaScript (port 3001). No build step.
 ```
 
@@ -127,7 +126,7 @@ uvicorn app.main:app --host 0.0.0.0 --port 3000
 
 All demo accounts use `password123`; change them before real use. The password hashes use Argon2id.
 
-### 5. Start the frontend
+### 4. Start the frontend
 
 Open a second terminal:
 
@@ -138,7 +137,7 @@ python3 -m http.server 3001 --bind 0.0.0.0
 
 On the director's machine, open **http://localhost:3001**. On a phone or another computer on the venue Wi-Fi, open **http://DIRECTOR-IP:3001**. The frontend uses the hostname in the page URL to reach the API on port 3000, so `localhost` on a phone is not the director's machine. Set `FRONTEND_ORIGINS` in `backend/.env` to include the frontend origin used by phones, then restart the backend. Ensure the venue firewall allows ports 3000 and 3001 from the venue network.
 
-### 6. Log in
+### 5. Log in
 
 The seed creates one user per role. **The demo password for all of them is `password123`.**
 
