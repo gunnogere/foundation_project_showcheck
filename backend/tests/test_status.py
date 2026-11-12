@@ -43,3 +43,32 @@ def test_unreachable_device_is_fail(db_session):
 
     assert result["slots"][0]["status"] == "FAIL"
     assert result["slots"][0]["details"] == "Device is not responding"
+
+
+def test_matching_device_is_pass(db_session):
+    baseline = Baseline(name="Test Show", active=True)
+    device = Device(
+        name="Main Projector",
+        type="PROJECTOR",
+        identifier="PROJECTOR-TEST-2",
+        online=True,
+        params={"input": "HDMI 1"},
+    )
+
+    baseline.items.append(
+        BaselineItem(
+            label="Main screen",
+            type="PROJECTOR",
+            critical=True,
+            expected_params={"input": "HDMI 1"},
+            device=device,
+        )
+    )
+    db_session.add(baseline)
+    db_session.commit()
+
+    result = _active_status(db_session)
+
+    assert result["slots"][0]["status"] == "PASS"
+    assert result["slots"][0]["details"] == "Matches baseline"
+    assert result["counts"]["PASS"] == 1
