@@ -49,7 +49,6 @@ function detectDeviceStatusChanges(slots) {
       ])
   );
 
-  // Avoid notifications during the first dashboard load
   if (!firstDashboardLoad) {
     for (const [id, current] of currentStatuses) {
       const previous = previousDeviceStatuses.get(id);
@@ -70,7 +69,6 @@ function detectDeviceStatusChanges(slots) {
 function render(d) {
   const b = d.baseline;
 
-  // Update monitoring information
   updateLastUpdated();
   detectDeviceStatusChanges(d.slots);
 
@@ -161,13 +159,43 @@ const reload = poll(async () => {
 
 // Run pre-show check button
 if (can(user, "runCheck")) {
-  $("#run-check").classList.remove("hidden");
+  const button = $("#run-check");
 
-  $("#run-check").onclick = guard(async () => {
-    await api("/checks", { method: "POST" });
+  button.classList.remove("hidden");
 
-    toast("Pre-show check complete", "success");
+  const originalLabel = button.textContent.trim();
 
-    await reload();
+  button.onclick = guard(async () => {
+    // Prevent duplicate checks
+    if (button.disabled) return;
+
+    // Immediate visual feedback
+    button.disabled = true;
+    button.classList.add("checking");
+
+    button.innerHTML = `
+      <span class="check-spinner" aria-hidden="true">⟳</span>
+      Running check...
+    `;
+
+    button.setAttribute("aria-busy", "true");
+
+    try {
+      // Existing backend request remains unchanged
+      await api("/checks", {
+        method: "POST"
+      });
+
+      toast("Pre-show check complete", "success");
+
+      await reload();
+
+    } finally {
+      // Restore button whether the request succeeds or fails
+      button.disabled = false;
+      button.classList.remove("checking");
+      button.removeAttribute("aria-busy");
+      button.textContent = originalLabel;
+    }
   });
 }
