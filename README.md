@@ -95,7 +95,7 @@ sudo apt update
 sudo apt install -y git python3 python3-venv iputils-ping bluez
 ```
 
-No Node.js installation is needed for the Python backend or frontend.
+
 
 ### 2. Get the code
 
