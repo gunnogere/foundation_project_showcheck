@@ -1330,3 +1330,43 @@ button:disabled {
     font-size: 23px;
   }
 }
+
+//preshow feedback button//
+#run-check.checking {
+  background: #15803D;
+  color: #FFFFFF;
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 3px var(--accent-soft),
+    0 0 16px #22C55E55;
+  cursor: wait;
+  opacity: 1;
+}
+
+#run-check .check-spinner {
+  display: inline-block;
+  font-size: 17px;
+  line-height: 1;
+  color: #FFFFFF;
+  animation: check-spin 1s linear infinite;
+}
+
+@keyframes check-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+#run-check.checking:disabled {
+  background: #15803D;
+  border-color: var(--accent);
+  color: #FFFFFF;
+  opacity: 1;
+  cursor: wait;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #run-check .check-spinner {
+    animation: none;
+  }
+}
