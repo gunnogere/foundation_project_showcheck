@@ -16,6 +16,7 @@ import { deviceIcon, hostIcon } from "./icons.js";
 
 const user = await requireAuth("devices.html");
 const manage = can(user, "manageDevices");
+const DISCOVERY_PORT_KEYS = ["pjlink", "shure", "rtsp", "onvif", "artnet"];
 
 let devices = [], found = [], editing = null;
 
@@ -167,7 +168,7 @@ if (manage) {
 
   $("#discovery-ports-form").onsubmit = guard(async (e) => {
     e.preventDefault();
-    const ports = Object.fromEntries(["pjlink", "shure", "rtsp"].map((key) => [
+    const ports = Object.fromEntries(DISCOVERY_PORT_KEYS.map((key) => [
       key,
       Number($("#port-" + key).value)
     ]));

@@ -10,6 +10,7 @@ from app.database import build_engine, build_session_factory
 from app.main import create_app
 from app.main import _active_status
 from app.models import Baseline, Device, User
+from app.scanner import _artnet_probe, _classify_bluetooth, _onvif_probe
 from app.security import hash_password
 
 
@@ -112,7 +113,9 @@ def test_discovery_ports_are_saved_and_used_by_local_scan(client, monkeypatch):
     sign_in(client)
     response = client.get("/api/discovery/ports")
     assert response.status_code == 200
-    assert {row["key"]: row["port"] for row in response.json()["ports"]} == {"pjlink": 4352, "shure": 2202, "rtsp": 554}
+    assert {row["key"]: row["port"] for row in response.json()["ports"]} == {
+        "pjlink": 4352, "shure": 2202, "rtsp": 554, "onvif": 80, "artnet": 6454,
+    }
 
     updated = client.patch("/api/discovery/ports", json={"ports": {"pjlink": 4353}})
     assert updated.status_code == 200
@@ -127,6 +130,69 @@ def test_discovery_ports_are_saved_and_used_by_local_scan(client, monkeypatch):
     assert result.status_code == 200
     assert calls["ports"]["pjlink"] == 4353
     assert result.json()["bluetooth"]["available"] is False
+
+
+def test_bluetooth_hands_free_profile_is_adoptable_microphone():
+    result = _classify_bluetooth("Stage headset", "audio-headset", None, ["0000111e-0000-1000-8000-00805f9b34fb"])
+    assert result == (True, "headset", "Bluetooth microphone / headset", "MICROPHONE")
+
+
+def test_bluetooth_microphone_presence_does_not_claim_audio_is_verified(client):
+    sign_in(client)
+    device = client.post("/api/devices", json={
+        "name": "Stage headset", "type": "MICROPHONE", "source": "DISCOVERED",
+        "identifier": "BT-00:11:22:33:44:55", "params": {"via": "bluetooth", "kind": "headset"},
+    }).json()
+    baseline = client.post("/api/baselines", json={"name": "Audio check"}).json()
+    client.post(f"/api/baselines/{baseline['id']}/items", json={
+        "label": "Stage microphone", "type": "MICROPHONE", "deviceId": device["id"],
+    })
+    client.patch(f"/api/baselines/{baseline['id']}", json={"active": True})
+
+    dashboard = client.get("/api/dashboard").json()
+    assert dashboard["counts"]["UNKNOWN"] == 1
+    assert dashboard["slots"][0]["details"].startswith("Bluetooth device discovered nearby")
+
+
+def test_artnet_probe_requires_artpoll_reply(monkeypatch):
+    class FakeSocket:
+        def __init__(self, response):
+            self.response = response
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def settimeout(self, _timeout):
+            pass
+
+        def sendto(self, _packet, _target):
+            pass
+
+        def recvfrom(self, _size):
+            return self.response, ("192.168.1.25", 6454)
+
+    monkeypatch.setattr("app.scanner.socket.socket", lambda *_args: FakeSocket(b"Art-Net\x00\x00\x21"))
+    assert _artnet_probe("192.168.1.25", 6454) is True
+    monkeypatch.setattr("app.scanner.socket.socket", lambda *_args: FakeSocket(b"not Art-Net"))
+    assert _artnet_probe("192.168.1.25", 6454) is False
+
+
+def test_onvif_probe_requires_onvif_soap_response(monkeypatch):
+    class FakeResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def read(self, _size):
+            return b"<s:Envelope>http://www.onvif.org/ver10/device/wsdl GetDeviceInformationResponse</s:Envelope>"
+
+    monkeypatch.setattr("app.scanner.urllib.request.urlopen", lambda _request, timeout: FakeResponse())
+    assert _onvif_probe("192.168.1.25", 80) is True
 
 
 def test_demo_seed_keeps_existing_show_states(monkeypatch, tmp_path):
