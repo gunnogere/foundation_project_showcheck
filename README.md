@@ -57,7 +57,7 @@ A baseline maps *roles* to devices. For example, in the baseline Mic 1 is "Main 
 | Operator | Run checks and log incidents |
 | Viewer | Read-only |
 
-**Important:** the scan results are real. The backend (Linux only) scans the server's local /24 network and nearby Bluetooth at the same time, and shows each device with its name, MAC address and a badge saying where it was found. Technical Directors can configure the PJLink, Shure control and RTSP ports in the Devices discovery dialog. Here is what each check does:
+**Important:** the scan results are real. The backend (Linux only) scans the server's local /24 network and nearby Bluetooth at the same time, and shows each device with its name, MAC address and a badge saying where it was found. Technical Directors can configure the PJLink, Shure control, RTSP, ONVIF and Art-Net ports in the Devices discovery dialog. Here is what each check does:
 
 | Check | What it does | Result |
 |---|---|---|
@@ -67,8 +67,10 @@ A baseline maps *roles* to devices. For example, in the baseline Mic 1 is "Main 
 | PJLink probe (default port 4352) | Checks whether the configured port is open | Projector, **adoptable** |
 | Shure control probe (default port 2202) | Checks whether the configured port is open | Mic receiver, **adoptable** |
 | RTSP probe (default port 554) | Checks whether the configured port is open | Camera, **adoptable** |
+| ONVIF probe (default port 80) | Sends a device-info SOAP request and checks for an ONVIF response | Camera, **adoptable** |
+| Art-Net probe (default port 6454) | Sends ArtPoll and checks for an ArtPollReply | Lighting node, **adoptable** |
 | Any other LAN / Wi-Fi host (laptops, phones) | No supported protocol answered | Shown as **Not adoptable** |
-| Bluetooth scan (about 8 seconds) | Listens for nearby Bluetooth devices (needs BlueZ's `bluetoothctl` and a Bluetooth adapter) | Headsets and speakers (for example silent disco headsets), **adoptable**; phones and other devices **not adoptable** |
+| Bluetooth scan (about 8 seconds) | Listens for nearby Bluetooth devices (needs BlueZ's `bluetoothctl` and a Bluetooth adapter) | Hands-free microphones/headsets and speakers (for example silent disco headsets), **adoptable**; phones and other devices **not adoptable**. Presence is detected, but audio operation cannot be verified, so checks report **Unknown**. |
 | UHF/RF wireless signals | Needs an RF receiver | Not yet, see [Future work](#future-work) |
 
 The demo gear in the seeded show (mics, lights, mixer and so on) is simulated data stored in the database. It does not appear in scan results.

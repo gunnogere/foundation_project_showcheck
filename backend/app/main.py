@@ -191,6 +191,8 @@ def _active_status(db: Session):
             status, details = "FAIL", "Device is not responding"
         elif device.source == "MANUAL":
             status, details = "UNKNOWN", "Analogue device - cannot be verified automatically"
+        elif (device.params or {}).get("via") == "bluetooth":
+            status, details = "UNKNOWN", "Bluetooth device discovered nearby - audio operation cannot be verified automatically"
         else:
             differences = [f"{key}: expected {expected}, found {device.params.get(key, 'nothing')}" for key, expected in (item.expected_params or {}).items() if str(device.params.get(key)) != str(expected)]
             status = "PASS" if not differences else ("FAIL" if item.critical else "WARNING")
