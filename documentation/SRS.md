@@ -85,16 +85,16 @@ ShowCheck is a standalone system made of two applications:
 
 ```mermaid
 flowchart LR
-    Browser["Browser<br/>(plain HTML, CSS, JS)<br/>port 3001"] -- "HTTP + JSON, cookie auth" --> API["Backend API<br/>(Next.js route handlers)<br/>port 3000"]
-    API -- "Prisma" --> DB[("MySQL database")]
+    Browser["Browser<br/>(plain HTML, CSS, JS)<br/>port 3001"] -- "HTTP + JSON, cookie auth" --> API["Backend API<br/>(FastAPI)<br/>port 3000"]
+    API -- "SQLAlchemy" --> DB[("Local SQLite database")]
     API -- "ping, ARP, mDNS, NetBIOS,<br/>TCP probes" --> LAN["LAN / Wi-Fi devices"]
     API -- "bluetoothctl" --> BT["Bluetooth devices"]
 ```
 
-- **Frontend:** static HTML, CSS and JavaScript served by any static file server. No build step and no Node.js needed.
-- **Backend:** a Next.js application that exposes only a JSON API. It talks to a MySQL database through Prisma, and it performs the network and Bluetooth scans from the machine it runs on.
+- **Frontend:** static HTML, CSS and JavaScript served by any static file server. No build step is needed.
+- **Backend:** a FastAPI application that exposes a JSON API. It stores data in a local SQLite database through SQLAlchemy and performs network and Bluetooth scans from the machine it runs on.
 
-The two are separate on purpose, so frontend contributors do not need to know Node.js.
+The two are separate on purpose, so frontend contributors do not need to work with the Python backend.
 
 ### 2.2 Product functions (summary)
 
@@ -119,17 +119,17 @@ All users are expected to be comfortable with AV terminology and a web browser. 
 
 ### 2.4 Operating environment
 
-- **Backend host:** Linux, tested on Ubuntu, with Node.js 20 or newer. Network scanning uses `ping` and `/proc/net/arp`; Bluetooth scanning uses BlueZ's `bluetoothctl` and needs a Bluetooth adapter. macOS and Windows are not tested.
+- **Backend host:** Linux, tested on Ubuntu, with Python 3.11 or newer. Network scanning uses `ping` and `/proc/net/arp`; Bluetooth scanning uses BlueZ's `bluetoothctl` and needs a Bluetooth adapter. macOS and Windows are not tested.
 - **Frontend host:** any static file server (for example `python3 -m http.server`).
-- **Database:** MySQL, hosted online and shared by the team.
+- **Database:** SQLite, stored locally on the backend host.
 - **Client:** a current desktop browser. The frontend uses ES modules and the HTML `<dialog>` element. The layout is designed for desktop and is not fully responsive for small screens.
 - The backend machine must be on the same network as the gear it scans.
 
 ### 2.5 Design and implementation constraints
 
-- C-1: The frontend is plain HTML, CSS and JavaScript with no build tooling, so that team members without Node.js experience can contribute.
-- C-2: The backend uses Next.js (API routes only), Prisma and MySQL.
-- C-3: Database credentials live in a file that is not committed to the repository.
+- C-1: The frontend is plain HTML, CSS and JavaScript with no build tooling.
+- C-2: The backend uses Python 3.11 or newer, FastAPI, SQLAlchemy and SQLite.
+- C-3: The signing secret lives in a file that is not committed to the repository.
 - C-4: The browser must open the site as `localhost` (not `127.0.0.1`) so the session cookie is sent; the backend allows cross-origin requests only from configured origins.
 - C-5: Discovery of real devices depends on the interfaces and permissions those devices expose.
 
@@ -325,7 +325,7 @@ All users are expected to be comfortable with AV terminology and a web browser. 
 
 ### 4.3 Software interfaces
 
-- SI-1: MySQL database through Prisma.
+- SI-1: Local SQLite database through SQLAlchemy.
 - SI-2: Linux `ping`, `/proc/net/arp` and `bluetoothctl`.
 - SI-3: Network protocols used for probing: PJLink (TCP 4352), Shure control (TCP 2202), RTSP (TCP 554), mDNS (UDP 5353), NetBIOS name service (UDP 137), reverse DNS.
 
