@@ -7,6 +7,10 @@
             "matchCommandLine": true
         },
         ".venv/bin/pytest": true,
-        ".venv/bin/python": true
+        ".venv/bin/python": true,
+        "/^python3 -m pytest -q$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
     }
 }
