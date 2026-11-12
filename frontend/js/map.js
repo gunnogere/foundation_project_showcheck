@@ -1,6 +1,5 @@
 import {
   $,
-  STATUS_COLOR,
   api,
   can,
   esc,
@@ -76,6 +75,14 @@ function drawMap() {
       .map((s) => [s.deviceId, s])
   );
 
+  const styles = getComputedStyle(document.documentElement);
+  const statusColors = {
+    PASS: styles.getPropertyValue("--pass").trim(),
+    WARNING: styles.getPropertyValue("--warning").trim(),
+    FAIL: styles.getPropertyValue("--fail").trim(),
+    UNKNOWN: styles.getPropertyValue("--unknown").trim(),
+  };
+
   const tierCounts = {};
 
   for (const d of devices) {
@@ -128,8 +135,8 @@ function drawMap() {
     const s = statusOf.get(d.id);
 
     const color = s
-      ? STATUS_COLOR[s.status] ?? STATUS_COLOR.UNKNOWN
-      : "#64748b";
+      ? statusColors[s.status] ?? statusColors.UNKNOWN
+      : statusColors.UNKNOWN;
 
     const selectedClass =
       selected?.kind === "node" && selected.id === d.id
@@ -197,7 +204,7 @@ function drawMap() {
         >
           <path
             d="M0,0 L10,5 L0,10 z"
-            fill="#777777"
+            fill="var(--edge)"
           />
         </marker>
       </defs>
