@@ -101,3 +101,32 @@ def test_non_critical_mismatch_is_warning(db_session):
     assert result["slots"][0]["status"] == "WARNING"
     assert "expected HDMI 1, found HDMI 2" in result["slots"][0]["details"]
     assert result["counts"]["WARNING"] == 1
+
+
+def test_critical_mismatch_is_fail(db_session):
+    baseline = Baseline(name="Test Show", active=True)
+    device = Device(
+        name="Main Projector",
+        type="PROJECTOR",
+        identifier="PROJECTOR-TEST-4",
+        online=True,
+        params={"input": "HDMI 2"},
+    )
+
+    baseline.items.append(
+        BaselineItem(
+            label="Main screen",
+            type="PROJECTOR",
+            critical=True,
+            expected_params={"input": "HDMI 1"},
+            device=device,
+        )
+    )
+    db_session.add(baseline)
+    db_session.commit()
+
+    result = _active_status(db_session)
+
+    assert result["slots"][0]["status"] == "FAIL"
+    assert "expected HDMI 1, found HDMI 2" in result["slots"][0]["details"]
+    assert result["counts"]["FAIL"] == 1
