@@ -7,6 +7,40 @@ export class ApiError extends Error {
   }
 }
 
+const THEME_STORAGE_KEY = "showcheck-theme";
+
+function updateThemeButtons() {
+  const isDark = document.documentElement.dataset.theme === "dark";
+  const label = isDark ? "Light mode" : "Dark mode";
+  document.querySelectorAll("[data-theme-toggle]").forEach((button) => {
+    button.textContent = label;
+    button.setAttribute("aria-label", `Switch to ${label.toLowerCase()}`);
+    button.setAttribute("aria-pressed", String(isDark));
+    button.title = `Switch to ${label.toLowerCase()}`;
+  });
+}
+
+let savedTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+try {
+  const storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+  if (storedTheme === "light" || storedTheme === "dark") savedTheme = storedTheme;
+} catch {
+}
+document.documentElement.dataset.theme = savedTheme;
+updateThemeButtons();
+
+document.addEventListener("click", (event) => {
+  if (!event.target.closest("[data-theme-toggle]")) return;
+
+  const theme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+  document.documentElement.dataset.theme = theme;
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  } catch {
+  }
+  updateThemeButtons();
+});
+
 // Calls the backend. Throws ApiError with the server's message on failure.
 export async function api(path, { method = "GET", body } = {}) {
   const res = await fetch(`${API_URL}/api${path}`, {
@@ -43,8 +77,6 @@ export const $ = (selector, root = document) => root.querySelector(selector);
 
 export const statusBadge = (s) => `<span class="badge ${s.toLowerCase()}">${esc(s)}</span>`;
 export const severityBadge = (s) => `<span class="badge sev-${s.toLowerCase()}">${esc(s)}</span>`;
-
-export const STATUS_COLOR = { PASS: "#10b981", WARNING: "#f59e0b", FAIL: "#ef4444", UNKNOWN: "#94a3b8" };
 
 // "key=value" per line <-> object
 export function parseParams(text) {
@@ -120,8 +152,12 @@ export async function requireAuth(page) {
     <div class="user">
       <strong>${esc(user.name)}</strong>
       <div class="muted">${esc(ROLE_LABEL[user.role])}</div>
-      <button id="logout" class="btn small">Log out</button>
+      <div class="user-actions">
+        <button type="button" class="btn small" data-theme-toggle>Dark mode</button>
+        <button id="logout" type="button" class="btn small">Log out</button>
+      </div>
     </div>`;
+  updateThemeButtons();
   $("#logout").onclick = async () => {
     await api("/auth/logout", { method: "POST" }).catch(() => {});
     location.href = "login.html";
