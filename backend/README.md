@@ -25,6 +25,6 @@ uvicorn app.main:app --host 0.0.0.0 --port 3000
 
 All four demo users use `password123`. Start the static frontend separately with `python3 -m http.server 3001 --bind 0.0.0.0` from `../frontend`. Open `http://localhost:3001` locally or `http://DIRECTOR-IP:3001` from a phone on the same Wi-Fi. Set `FRONTEND_ORIGINS` in `.env` to the frontend origins in use.
 
-The API scans only the director machine's local `/24` subnet. Install `iputils-ping` and `bluez` for LAN and Bluetooth discovery. PJLink, Shure control, and RTSP ports can be changed by an Admin or Technical Director in Devices > Auto-discovery.
+The API scans only the director machine's local `/24` subnet. Install `iputils-ping` and `bluez` for LAN and Bluetooth discovery. PJLink projectors, Shure receivers, RTSP/ONVIF cameras and Art-Net lighting nodes are supported on LAN. Their ports can be changed by an Admin or Technical Director in Devices > Auto-discovery. Bluetooth hands-free devices are listed as microphones; discovery confirms nearby presence but cannot verify audio operation.
 
 Run the API tests with `pytest -q` from this directory.

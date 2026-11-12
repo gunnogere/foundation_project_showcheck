@@ -2,22 +2,28 @@ import ipaddress
 import re
 import socket
 import subprocess
+import urllib.error
+import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 
 import psutil
 
-DEFAULT_PORTS = {"pjlink": 4352, "shure": 2202, "rtsp": 554}
+DEFAULT_PORTS = {"pjlink": 4352, "shure": 2202, "rtsp": 554, "onvif": 80, "artnet": 6454}
 PROTOCOLS = {
     "pjlink": {"type": "PROJECTOR", "manufacturer": "Unknown", "model": "PJLink projector"},
     "shure": {"type": "MICROPHONE", "manufacturer": "Shure", "model": "Shure network receiver"},
     "rtsp": {"type": "CAMERA", "manufacturer": "Unknown", "model": "RTSP camera"},
+    "onvif": {"type": "CAMERA", "manufacturer": "Unknown", "model": "ONVIF camera"},
+    "artnet": {"type": "LIGHT", "manufacturer": "Unknown", "model": "Art-Net lighting node"},
 }
-NOT_AV = "Not a recognised AV device. Only configured AV protocol ports can be adopted."
+NOT_AV = "Not a recognised AV device. Only configured AV protocol responses can be adopted."
 SCAN_SECONDS = 8
 ANSI = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
 AUDIO_UUIDS = ("0000110b", "0000110a", "0000111e", "00001108")
-AUDIO_NAME = re.compile(r"speaker|headphone|\bphones\b|headset|earphone|earbud|buds|pods|disco|boom|jbl|soundbar|sound ?bar", re.I)
+MICROPHONE_UUIDS = ("0000111e", "00001108")
+AUDIO_NAME = re.compile(r"speaker|headphone|\bphones\b|headset|earphone|earbud|buds|pods|disco|boom|jbl|soundbar|sound ?bar|microphone|\bmic\b", re.I)
 HEADSET_NAME = re.compile(r"headphone|\bphones\b|headset|earphone|earbud|buds|pods|disco", re.I)
+MICROPHONE_NAME = re.compile(r"headset|hands.?free|earphone|earbud|\bmicrophone\b|\bmic\b", re.I)
 
 
 def _local_network():
@@ -65,6 +71,51 @@ def _port_open(ip, port):
             return True
     except OSError:
         return False
+
+
+def _onvif_probe(ip, port):
+    soap = b'''<?xml version="1.0" encoding="UTF-8"?>
+<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope"
+ xmlns:tds="http://www.onvif.org/ver10/device/wsdl">
+ <s:Body><tds:GetDeviceInformation/></s:Body>
+</s:Envelope>'''
+    request = urllib.request.Request(
+        f"http://{ip}:{port}/onvif/device_service",
+        data=soap,
+        headers={"Content-Type": "application/soap+xml; charset=utf-8"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=0.8) as response:
+            body = response.read(8192)
+    except urllib.error.HTTPError as error:
+        try:
+            body = error.read(8192)
+        finally:
+            error.close()
+    except (OSError, urllib.error.URLError):
+        return False
+    return b"onvif.org" in body.lower() and (b"getdeviceinformation" in body.lower() or b"soap-envelope" in body.lower())
+
+
+def _artnet_probe(ip, port):
+    packet = b"Art-Net\x00\x00\x20\x00\x0e\x00\x00"
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+            sock.settimeout(0.5)
+            sock.sendto(packet, (ip, port))
+            response, _address = sock.recvfrom(1024)
+    except OSError:
+        return False
+    return response.startswith(b"Art-Net\x00") and len(response) >= 10 and response[8:10] == b"\x00\x21"
+
+
+def _protocol_detected(ip, key, port):
+    if key == "onvif":
+        return _onvif_probe(ip, port)
+    if key == "artnet":
+        return _artnet_probe(ip, port)
+    return _port_open(ip, port)
 
 
 def _udp_query(ip, port, packet, timeout=1):
@@ -194,7 +245,7 @@ def scan_network(ports=None):
         name = _device_name(ip) or "Unknown device"
         for key, port in ports.items():
             config = PROTOCOLS.get(key)
-            if config and _port_open(ip, port):
+            if config and _protocol_detected(ip, key, port):
                 return {**base, "name": name, **config, "adoptable": True}
         return {**base, "name": name, "type": "OTHER", "manufacturer": "Unknown", "model": "", "adoptable": False, "reason": NOT_AV}
 
@@ -207,13 +258,20 @@ def _classify_bluetooth(name, icon, device_class, uuids):
     major = -1 if device_class is None else (device_class >> 8) & 0x1F
     looks_audio = icon.startswith("audio") or bool(AUDIO_NAME.search(name)) or (not icon and (major == 4 or any(uuid.startswith(prefix) for uuid in uuids for prefix in AUDIO_UUIDS)))
     if looks_audio and icon not in ("phone", "computer"):
-        kind = "headset" if icon in ("audio-headset", "audio-headphones") or HEADSET_NAME.search(name) else "speaker"
-        return True, kind, "Bluetooth headset" if kind == "headset" else "Bluetooth speaker"
+        has_microphone = (
+            icon == "audio-headset"
+            or bool(MICROPHONE_NAME.search(name))
+            or any(uuid.startswith(prefix) for uuid in uuids for prefix in MICROPHONE_UUIDS)
+        )
+        if has_microphone:
+            return True, "headset", "Bluetooth microphone / headset", "MICROPHONE"
+        kind = "headset" if icon == "audio-headphones" or HEADSET_NAME.search(name) else "speaker"
+        return True, kind, "Bluetooth headset" if kind == "headset" else "Bluetooth speaker", "OTHER"
     if icon == "phone":
-        return False, "phone", "Phone"
+        return False, "phone", "Phone", "OTHER"
     if icon == "computer":
-        return False, "laptop", "Computer"
-    return False, None, ""
+        return False, "laptop", "Computer", "OTHER"
+    return False, None, "", "OTHER"
 
 
 def scan_bluetooth():
@@ -263,9 +321,9 @@ def scan_bluetooth():
         dashed = mac.replace(":", "-")
         raw_name = (data.get("alias") or data.get("name") or "")[:60]
         name = "Unknown device" if not raw_name or raw_name == dashed else raw_name
-        adoptable, kind, label = _classify_bluetooth(name, data.get("icon", ""), data.get("class"), data["uuids"])
+        adoptable, kind, label, device_type = _classify_bluetooth(name, data.get("icon", ""), data.get("class"), data["uuids"])
         hosts.append({
-            "identifier": f"BT-{mac}", "name": name, "type": "OTHER", "manufacturer": "Bluetooth", "model": label,
+            "identifier": f"BT-{mac}", "name": name, "type": device_type, "manufacturer": "Bluetooth", "model": label,
             "macAddress": mac, "params": {"mac": mac, "via": "bluetooth", **({"kind": kind} if kind else {})},
             "adoptable": adoptable, "reason": None if adoptable else "Not audio gear. Only Bluetooth headsets and speakers can be adopted.",
             "via": "bluetooth", "kind": kind, "rssi": data.get("rssi"),

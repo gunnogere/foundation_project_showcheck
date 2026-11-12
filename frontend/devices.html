@@ -85,7 +85,7 @@
 
       <div id="discovery-settings" class="card hidden">
         <h3>Adoptable protocol ports</h3>
-        <p class="muted">These ports identify the supported projector, Shure receiver and RTSP camera protocols.</p>
+        <p class="muted">These ports are used for PJLink, Shure, RTSP, ONVIF camera and Art-Net lighting discovery.</p>
         <form id="discovery-ports-form">
           <div class="fields">
             <div class="field">
@@ -99,6 +99,14 @@
             <div class="field">
               <label for="port-rtsp">RTSP camera</label>
               <input id="port-rtsp" type="number" min="1" max="65535" required>
+            </div>
+            <div class="field">
+              <label for="port-onvif">ONVIF camera</label>
+              <input id="port-onvif" type="number" min="1" max="65535" required>
+            </div>
+            <div class="field">
+              <label for="port-artnet">Art-Net lighting node</label>
+              <input id="port-artnet" type="number" min="1" max="65535" required>
             </div>
           </div>
           <button class="btn small" type="submit">Save ports</button>
@@ -131,14 +139,18 @@
       <div class="card">
         <h2>Discovery limitations</h2>
         <p class="muted">
-          Adoptable devices include LAN / Wi-Fi hosts answering PJLink
-          (projectors), Shure control or RTSP (cameras), and Bluetooth
-          headsets and speakers.
+          Adoptable devices include LAN / Wi-Fi projectors answering PJLink,
+          Shure receivers, ONVIF / RTSP cameras, Art-Net lighting nodes, and
+          Bluetooth microphones, headsets and speakers.
         </p>
         <p class="muted">
           Wireless equipment using UHF/RF, including microphones and
           in-ear monitors, is not detected yet. This requires an
           additional RF receiver.
+        </p>
+        <p class="muted">
+          Bluetooth microphones are identified by their hands-free profile.
+          Discovery confirms nearby presence only; checks cannot verify audio operation.
         </p>
       </div>
 
