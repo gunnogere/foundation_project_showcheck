@@ -31,12 +31,19 @@ def scheduler():
         "Backup scheduler started. Weekly backups scheduled for Sundays at 8 AM."
     )
     while True:
-        schedule.run_pending()
-        time.sleep(60)
-        logging.exception("Backup scheduler encountered an error and will stop.")
-        logging.info(
-            "Backup scheduler stopped. Please check the logs for details and restart the scheduler."
-        )
+        try:
+
+            schedule.run_pending()
+            time.sleep(60)
+
+        except KeyboardInterrupt:
+            logging.info("Backup scheduler stopped by user.")
+            break
+
+        except Exception:
+            logging.exception(
+                "An error occurred in the backup scheduler. Please check the logs for details."
+            )
 
 
 if __name__ == "__main__":
