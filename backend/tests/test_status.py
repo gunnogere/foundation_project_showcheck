@@ -215,3 +215,13 @@ def test_bluetooth_device_cannot_be_verified(db_session):
         in result["slots"][0]["details"]
     )
     assert result["counts"]["UNKNOWN"] == 1
+
+
+def test_no_active_baseline(db_session):
+    baseline = Baseline(name="Test Show", active=False)
+
+    db_session.add(baseline)
+    db_session.commit()
+
+    result = _active_status(db_session)
+    assert result is None
