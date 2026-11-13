@@ -1,0 +1,7 @@
+2026-11-13 23:28:47,658 - INFO - Backup scheduler started. Weekly backups scheduled for Sundays at 8 AM.
+2026-11-13 23:29:47,661 - ERROR - Backup scheduler encountered an error and will stop.
+NoneType: None
+2026-11-13 23:29:47,664 - INFO - Backup scheduler stopped. Please check the logs for details and restart the scheduler.
+2026-11-13 23:30:47,666 - ERROR - Backup scheduler encountered an error and will stop.
+NoneType: None
+2026-11-13 23:30:47,667 - INFO - Backup scheduler stopped. Please check the logs for details and restart the scheduler.
