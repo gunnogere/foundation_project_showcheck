@@ -52,13 +52,13 @@ The backup command makes a consistent SQLite snapshot using SQLite's online back
    python -m app.backup run
    ```
 
-5. To automate, schedule that command on the same always-on host that runs ShowCheck. For example, a daily Linux cron entry at 02:00 is:
+5. To start the weekly scheduler, run it from `backend/` with the virtual environment active:
 
-   ```cron
-   0 2 * * * cd /path/to/foundation_project_showcheck/backend && .venv/bin/python -m app.backup run >> data/backup.log 2>&1
+   ```bash
+   python -m app.backup_scheduler
    ```
 
-   Replace the path with the repository's actual path. The host must be awake and connected to the internet at the scheduled time. Review the log and periodically restore a snapshot to verify recovery. Timestamped snapshots accumulate in Drive; delete old copies manually until a retention policy is configured.
+   It schedules a backup for Sundays at 08:00 using the host machine's local time. Keep the scheduler process running on the same always-on host as ShowCheck; if the process or host is stopped at the scheduled time, that backup will not run. The scheduler writes to the terminal and `backend/logs/backup_scheduler.log`. For unattended use, run it under an operating-system service manager so it starts again after a reboot. Review the log and periodically restore a snapshot to verify recovery. Timestamped snapshots accumulate in Drive; delete old copies manually until a retention policy is configured.
 
 To restore a snapshot, copy its Drive file ID and choose a new destination path that does not already exist:
 
