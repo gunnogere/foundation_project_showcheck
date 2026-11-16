@@ -154,6 +154,53 @@ These are demo accounts for development only. Change them before using this for 
 
 The demo show ("Kigali Gala Night") has a projector on the wrong input (Warning) and an offline LED bar (Fail), so you can see the states straight away. Log in as the Technical Director, open **Devices** and use **Edit** on any device to change its live settings or take it offline, then run a check from the dashboard to see how the result changes. **Register devices** has a network scan that lists the real hosts on your network (see above); other laptops and phones show as not adoptable.
 
+## Back up the database to Google Drive
+
+ShowCheck can create an integrity-checked SQLite snapshot, encrypt it locally, and upload a timestamped backup to Google Drive. Run these commands from `backend/` with the virtual environment active.
+
+### Configure Google Drive access
+
+1. Place the downloaded Google OAuth Desktop client JSON at `backend/secrets/oauth-client.json`. The `backend/secrets/` directory is ignored by Git; keep the OAuth client, access token, and folder ID private.
+2. Generate a Fernet encryption key:
+
+   ```bash
+   python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'
+   ```
+
+   Add it to `backend/.env` as `BACKUP_ENCRYPTION_KEY=<generated-key>`. Store a secure copy somewhere separate from the server and Google Drive. If the key is lost, the encrypted backups cannot be restored.
+3. Optional: to use an existing Drive folder, put its ID in `backend/secrets/drive-folder-id.txt`. Otherwise, ShowCheck creates a `ShowCheck Backups` folder during authorization. Set `GOOGLE_DRIVE_BACKUP_FOLDER` in `backend/.env` to change the name of the folder it creates.
+4. From `backend/`, authorize the app once. A browser window opens for Google sign-in and consent:
+
+   ```bash
+   python -m app.backup authorize
+   ```
+
+### Create and schedule backups
+
+Create a one-off backup to confirm the setup:
+
+```bash
+python -m app.backup run
+```
+
+To schedule weekly backups, start the scheduler:
+
+```bash
+python -m app.backup_scheduler
+```
+
+It runs each Sunday at 08:00 using the server machine's local time. Keep the scheduler running on the director's always-on host; use an operating-system service manager if it should restart automatically after a reboot. It logs to the terminal and `backend/logs/backup_scheduler.log`.
+
+### Restore a backup
+
+Copy the backup file ID from Google Drive and choose a destination path that does not already exist:
+
+```bash
+python -m app.backup restore DRIVE_FILE_ID --output data/restored-showcheck.db
+```
+
+The restore command decrypts the backup, checks SQLite integrity, and refuses to overwrite an existing file. Restore to a new path first, then follow your recovery procedure before replacing the active database. Periodically verify that a backup can be restored. Backups accumulate in Drive, so remove old snapshots manually until a retention policy is configured. If the Google OAuth app is External and remains in Testing mode, Google may expire its refresh token after seven days, requiring reauthorization for unattended backups.
+
 ## Where to change things
 
 | I want to... | Go to |
