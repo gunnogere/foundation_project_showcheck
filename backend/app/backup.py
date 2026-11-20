@@ -17,7 +17,7 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
-from googleapiclient.http import MediaIoBaseDownload, MediaFileUpload
+from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
 from sqlalchemy.engine import make_url
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
@@ -176,16 +176,17 @@ def upload_snapshot() -> None:
         _create_snapshot(source_path, snapshot_path)
         encrypted_path = Path(temp_dir) / backup_name
         encrypted_path.write_bytes(encryption.encrypt(snapshot_path.read_bytes()))
-        request = service.files().create(
-            body={"name": backup_name, "parents": [folder_id]},
-            media_body=MediaFileUpload(
-                str(encrypted_path), mimetype=BACKUP_MIME_TYPE, resumable=True
-            ),
-            fields="id,name,size",
-        )
-        uploaded = None
-        while uploaded is None:
-            _, uploaded = request.next_chunk(num_retries=3)
+        with encrypted_path.open("rb") as encrypted_file:
+            request = service.files().create(
+                body={"name": backup_name, "parents": [folder_id]},
+                media_body=MediaIoBaseUpload(
+                    encrypted_file, mimetype=BACKUP_MIME_TYPE, resumable=True
+                ),
+                fields="id,name,size",
+            )
+            uploaded = None
+            while uploaded is None:
+                _, uploaded = request.next_chunk(num_retries=3)
 
     print(
         f"Uploaded {uploaded['name']} ({uploaded.get('size', 'unknown')} bytes) "

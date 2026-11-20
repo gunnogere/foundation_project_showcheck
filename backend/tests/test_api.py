@@ -211,3 +211,50 @@ def test_demo_seed_keeps_existing_show_states(monkeypatch, tmp_path):
         assert status["counts"]["FAIL"] == 1
         assert status["counts"]["UNKNOWN"] == 1
     engine.dispose()
+
+
+def test_manual_incident_severities_remain_distinct(client):
+    sign_in(client)
+    for severity in ("LOW", "MEDIUM", "HIGH", "CRITICAL"):
+        response = client.post("/api/incidents", json={
+            "title": f"{severity} incident", "severity": severity,
+        })
+        assert response.status_code == 200
+        assert response.json()["severity"] == severity
+
+    assert client.post("/api/incidents", json={
+        "title": "Legacy label", "severity": "WARNING",
+    }).status_code == 400
+    incidents = client.get("/api/incidents").json()
+    assert {incident["severity"] for incident in incidents} == {
+        "LOW", "MEDIUM", "HIGH", "CRITICAL",
+    }
+    dashboard = client.get("/api/dashboard").json()
+    assert dashboard["counts"]["WARNING"] == 0
+    assert {incident["severity"] for incident in dashboard["openIncidents"]} == {
+        "LOW", "MEDIUM", "HIGH", "CRITICAL",
+    }
+
+
+def test_failed_check_incident_severity_uses_baseline_criticality(client):
+    sign_in(client)
+    baseline = client.post("/api/baselines", json={"name": "Severity show"}).json()
+    for critical, label in ((True, "Main screen"), (False, "Wing light")):
+        device = client.post("/api/devices", json={
+            "name": label, "type": "PROJECTOR" if critical else "LIGHT",
+            "identifier": f"OFFLINE-{label}", "source": "DISCOVERED",
+        }).json()
+        client.patch(f"/api/devices/{device['id']}", json={"online": False})
+        response = client.post(f"/api/baselines/{baseline['id']}/items", json={
+            "label": label, "type": device["type"],
+            "critical": critical, "deviceId": device["id"],
+        })
+        assert response.status_code == 200
+    client.patch(f"/api/baselines/{baseline['id']}", json={"active": True})
+
+    check = client.post("/api/checks")
+    assert check.status_code == 200
+    assert check.json()["fail"] == 2
+    incidents = {incident["title"]: incident["severity"] for incident in client.get("/api/incidents").json()}
+    assert incidents["Check failed: Main screen"] == "CRITICAL"
+    assert incidents["Check failed: Wing light"] == "HIGH"

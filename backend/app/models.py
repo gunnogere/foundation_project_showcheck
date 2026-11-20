@@ -118,7 +118,7 @@ class Incident(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     title: Mapped[str] = mapped_column(String(255))
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    severity: Mapped[str] = mapped_column(String(32), default="WARNING")
+    severity: Mapped[str] = mapped_column(String(32), default="MEDIUM")
     resolved: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     device_id: Mapped[int | None] = mapped_column("deviceId", ForeignKey("Device.id", ondelete="SET NULL"), nullable=True, index=True)
     reported_by_id: Mapped[int] = mapped_column("reportedById", ForeignKey("User.id"), index=True)

@@ -76,7 +76,7 @@ export const esc = (v) =>
 export const $ = (selector, root = document) => root.querySelector(selector);
 
 export const statusBadge = (s) => `<span class="badge ${s.toLowerCase()}">${esc(s)}</span>`;
-export const severityBadge = (s) => `<span class="badge sev-${s.toLowerCase()}">${esc(s)}</span>`;
+export const severityBadge = (s) => `<span class="badge sev-${s.toLowerCase()}">${esc(s[0] + s.slice(1).toLowerCase())}</span>`;
 
 // "key=value" per line <-> object
 export function parseParams(text) {

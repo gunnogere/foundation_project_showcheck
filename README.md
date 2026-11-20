@@ -41,13 +41,15 @@ Every checked item ends up as one of:
 
 A baseline maps *roles* to devices. For example, in the baseline Mic 1 is "Main singer" and Mic 2 is "Backup artist A". The check compares the device in that role, not just any microphone.
 
+Incident severity is separate from device check status. Low is for follow-up after the show; Medium has limited impact with a workaround; High risks an upcoming cue; Critical needs immediate escalation because of safety or a blocked key show function. A device can have a Warning check status while a related incident has High severity.
+
 ### What's in the app
 
 - **Dashboard:** status counts, health alerts and open incidents, refreshed every 5 seconds.
 - **Network map:** the connected gear drawn as a graph, coloured by status.
 - **Baseline & Check:** create a baseline, map devices to slots, run the pre-show check, see history.
 - **Devices:** auto-discovery and manual analogue registration.
-- **Incidents:** Info, Warning and Critical severity. A failed check logs a Critical incident on its own.
+- **Incidents:** Low, Medium, High and Critical severity. A failed check creates a High incident for a noncritical baseline item or a Critical incident for a critical item.
 - **Users:** Admin-only role management.
 
 | Role | What they can do |

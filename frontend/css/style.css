@@ -655,6 +655,10 @@ label.check {
   margin-bottom: 16px;
 }
 
+.severity-help {
+  margin: 8px 0 0;
+}
+
 .fields {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -779,6 +783,14 @@ dialog h2 {
   flex-wrap: wrap;
   gap: 9px;
   margin-top: 20px;
+}
+
+.form-error {
+  color: var(--fail);
+  border: 1px solid var(--fail);
+  border-radius: 9px;
+  padding: 10px 12px;
+  margin-top: 16px;
 }
 
 .tabs {

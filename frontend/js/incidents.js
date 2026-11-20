@@ -79,10 +79,11 @@ function render() {
 }
 
 // ---------- Load incidents ----------
-const load = poll(async () => {
+const refreshIncidents = async () => {
   incidents = await api("/incidents");
   render();
-});
+};
+const load = poll(refreshIncidents);
 
 // ---------- Filter incidents ----------
 $("#filter").onchange = render;
@@ -127,32 +128,48 @@ $("#log").onclick = guard(async () => {
     ).join("")}
   `;
 
+  $("#incident-form-error").classList.add("hidden");
+  $("#incident-form-error").textContent = "";
   $("#incident-dialog").showModal();
 });
 
 // ---------- Submit incident ----------
-$("#incident-form").onsubmit = guard(async (e) => {
+$("#incident-form").onsubmit = async (e) => {
   e.preventDefault();
+  const error = $("#incident-form-error");
+  error.classList.add("hidden");
+  error.textContent = "";
 
-  await api("/incidents", {
-    method: "POST",
-    body: {
-      title: $("#i-title").value,
-      description: $("#i-notes").value || undefined,
-      severity: $("#i-severity").value,
-      deviceId: $("#i-device").value
-        ? Number($("#i-device").value)
-        : null
-    }
-  });
+  try {
+    await api("/incidents", {
+      method: "POST",
+      body: {
+        title: $("#i-title").value,
+        description: $("#i-notes").value || undefined,
+        severity: $("#i-severity").value,
+        deviceId: $("#i-device").value
+          ? Number($("#i-device").value)
+          : null
+      }
+    });
+  } catch (err) {
+    error.textContent = err.message || "Could not log the incident. Please try again.";
+    error.classList.remove("hidden");
+    error.focus();
+    return;
+  }
 
   e.target.reset();
   $("#incident-dialog").close();
 
-  toast("Incident logged", "success");
-
-  await load();
-});
+  try {
+    await refreshIncidents();
+    toast("Incident logged", "success");
+  } catch (err) {
+    console.error(err);
+    toast("Incident logged, but the list could not refresh. Reload the page to see it.", "error");
+  }
+};
 
 // ---------- Close dialog ----------
 document.querySelectorAll("#incident-dialog [data-close]")

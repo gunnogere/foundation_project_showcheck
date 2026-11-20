@@ -567,7 +567,8 @@ def create_app(secret_key=None, database_url=None, cookie_secure=None):
             title = f"Check failed: {slot['label']}"
             existing = db.scalar(select(Incident.id).where(Incident.title == title, Incident.resolved.is_(False)))
             if existing is None:
-                db.add(Incident(title=title, description=slot["details"], severity="CRITICAL", device_id=slot["deviceId"], reported_by_id=user.id))
+                severity = "CRITICAL" if slot["critical"] else "HIGH"
+                db.add(Incident(title=title, description=slot["details"], severity=severity, device_id=slot["deviceId"], reported_by_id=user.id))
         db.commit()
         run = db.scalar(select(CheckRun).where(CheckRun.id == run.id).options(joinedload(CheckRun.run_by), joinedload(CheckRun.baseline), selectinload(CheckRun.results).joinedload(CheckResult.item)))
         return _run_json(run, True)
