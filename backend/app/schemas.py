@@ -16,7 +16,7 @@ class InputModel(BaseModel):
 Role = Literal["ADMIN", "TECH_DIRECTOR", "OPERATOR", "VIEWER"]
 DeviceType = Literal["CAMERA", "LIGHT", "MICROPHONE", "SWITCH", "MIXER", "PROJECTOR", "PLAYBACK", "OTHER"]
 DeviceSource = Literal["DISCOVERED", "MANUAL"]
-Severity = Literal["INFO", "WARNING", "CRITICAL"]
+Severity = Literal["LOW", "MEDIUM", "HIGH", "CRITICAL"]
 
 
 class LoginInput(InputModel):

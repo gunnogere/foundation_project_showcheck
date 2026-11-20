@@ -67,7 +67,7 @@ The API is authoritative for authorization. Hiding controls in the frontend does
 | FR-DEV-1 | Authorized users shall register, edit, and remove discovered or manually entered devices. | Must | Implemented |
 | FR-BASE-1 | Authorized users shall create and manage baselines, named equipment roles, expected settings, criticality, and device mappings. | Must | Implemented |
 | FR-CHECK-1 | Authorized users shall run a check against the active baseline and receive Pass, Warning, Fail, or Unknown results with explanatory details. | Must | Implemented |
-| FR-CHECK-2 | The system shall retain check history and create a critical incident for a failed check without creating duplicate incidents for the same failure. | Should | Implemented |
+| FR-CHECK-2 | The system shall retain check history and create a Critical incident for a failed critical slot or a High incident for a failed noncritical slot, without creating duplicate incidents for the same failure. | Should | Implemented |
 | FR-UI-1 | The dashboard shall show readiness counts, alerts, incidents, and mapped equipment status, refreshing periodically. | Must | Implemented |
 | FR-UI-2 | Users shall view and manage device dependencies in a network map. | Should | Implemented |
 | FR-UI-3 | Authorized users shall create, filter, and resolve incidents according to their role. | Must | Implemented |

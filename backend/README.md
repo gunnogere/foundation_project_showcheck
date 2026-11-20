@@ -69,3 +69,7 @@ python -m app.backup restore DRIVE_FILE_ID --output data/restored-showcheck.db
 The restore command decrypts and integrity-checks the downloaded database, and refuses to overwrite an existing destination. The script requests only the `drive.file` OAuth scope. If the OAuth app is External and left in Testing mode, Google refresh tokens expire after seven days; use an approved Internal or production OAuth setup for unattended backups, or the job will require reauthorization. A revoked token or a Drive/network error makes the command fail visibly with a non-zero exit status.
 
 Run the API tests with `pytest -q` from this directory.
+
+## Incident severities
+
+Incidents use `LOW`, `MEDIUM`, `HIGH` or `CRITICAL`. These values describe crew response priority and are separate from device check statuses (`PASS`, `WARNING`, `FAIL`, `UNKNOWN`).
