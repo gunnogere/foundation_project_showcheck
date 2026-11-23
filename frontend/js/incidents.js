@@ -15,7 +15,6 @@ const canResolve = can(user, "resolveIncident");
 
 let incidents = [];
 
-// ---------- Render incident register ----------
 function render() {
   const filter = $("#filter").value;
 
@@ -78,17 +77,14 @@ function render() {
       `;
 }
 
-// ---------- Load incidents ----------
 const refreshIncidents = async () => {
   incidents = await api("/incidents");
   render();
 };
 const load = poll(refreshIncidents);
 
-// ---------- Filter incidents ----------
 $("#filter").onchange = render;
 
-// ---------- Resolve or reopen incident ----------
 $("#incidents").addEventListener(
   "click",
   guard(async (e) => {
@@ -112,12 +108,10 @@ $("#incidents").addEventListener(
   })
 );
 
-// ---------- Show incident logging button ----------
 if (can(user, "logIncident")) {
   $("#log").classList.remove("hidden");
 }
 
-// ---------- Open incident dialog ----------
 $("#log").onclick = guard(async () => {
   const devices = await api("/devices");
 
@@ -133,7 +127,6 @@ $("#log").onclick = guard(async () => {
   $("#incident-dialog").showModal();
 });
 
-// ---------- Submit incident ----------
 $("#incident-form").onsubmit = async (e) => {
   e.preventDefault();
   const error = $("#incident-form-error");
@@ -171,7 +164,6 @@ $("#incident-form").onsubmit = async (e) => {
   }
 };
 
-// ---------- Close dialog ----------
 document.querySelectorAll("#incident-dialog [data-close]")
   .forEach((button) => {
     button.addEventListener("click", () => {

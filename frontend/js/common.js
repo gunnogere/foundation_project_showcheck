@@ -39,9 +39,9 @@ document.addEventListener("click", (event) => {
   } catch {
   }
   updateThemeButtons();
-});
+}
 
-// Calls the backend. Throws ApiError with the server's message on failure.
+// Sends requests to the backend and handles unsuccessful responses.
 export async function api(path, { method = "GET", body } = {}) {
   const res = await fetch(`${API_URL}/api${path}`, {
     method,
@@ -54,7 +54,6 @@ export async function api(path, { method = "GET", body } = {}) {
   return data;
 }
 
-// ---------- Roles (mirrors backend/lib/rbac.ts; only hides buttons, the API enforces it) ----------
 const PERMISSIONS = {
   manageUsers: ["ADMIN"],
   editBaseline: ["ADMIN", "TECH_DIRECTOR"],
@@ -68,8 +67,7 @@ export const can = (user, permission) => PERMISSIONS[permission].includes(user.r
 
 export const DEVICE_TYPES = ["CAMERA", "LIGHT", "MICROPHONE", "SWITCH", "MIXER", "PROJECTOR", "PLAYBACK", "OTHER"];
 
-// ---------- Small helpers ----------
-// Always escape server data before putting it in innerHTML.
+// Escape server data before displaying it in HTML.
 export const esc = (v) =>
   String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
@@ -78,7 +76,6 @@ export const $ = (selector, root = document) => root.querySelector(selector);
 export const statusBadge = (s) => `<span class="badge ${s.toLowerCase()}">${esc(s)}</span>`;
 export const severityBadge = (s) => `<span class="badge sev-${s.toLowerCase()}">${esc(s[0] + s.slice(1).toLowerCase())}</span>`;
 
-// "key=value" per line <-> object
 export function parseParams(text) {
   const out = {};
   for (const line of text.split("\n")) {
@@ -87,6 +84,7 @@ export function parseParams(text) {
   }
   return out;
 }
+
 export const formatParams = (p) => Object.entries(p || {}).map(([k, v]) => `${k}=${v}`).join("\n");
 
 export function toast(message, type = "info") {
@@ -103,7 +101,7 @@ export function toast(message, type = "info") {
   setTimeout(() => el.remove(), 3500);
 }
 
-// Runs fn now and every `ms`. Ticks are skipped while the user is in a dialog or choosing from a dropdown.
+// Refreshes the data regularly, but skips updates while a dialog or dropdown is open.
 export function poll(fn, ms = 5000) {
   const run = () => fn().catch((e) => console.error(e));
   run();
@@ -114,7 +112,7 @@ export function poll(fn, ms = 5000) {
   return run;
 }
 
-// Wrap a click/submit handler so errors become toasts.
+// Shows errors as toast messages instead of leaving them unhandled.
 export const guard = (fn) => async (e) => {
   try {
     await fn(e);
@@ -123,7 +121,6 @@ export const guard = (fn) => async (e) => {
   }
 };
 
-// ---------- Page shell: login check + sidebar ----------
 const NAV = [
   ["index.html", "Dashboard"],
   ["map.html", "Network Map"],
@@ -133,14 +130,14 @@ const NAV = [
   ["users.html", "Users"],
 ];
 
-// Call at the top of every page except login. Returns the logged-in user.
+// Checks that a user is logged in and sets up the page sidebar.
 export async function requireAuth(page) {
   let user;
   try {
     user = await api("/auth/me");
   } catch {
     location.href = "login.html";
-    return new Promise(() => {}); // stop the page script
+    return new Promise(() => {}); // Stop the page script if authentication fails.
   }
 
   const links = NAV.filter(([href]) => href !== "users.html" || can(user, "manageUsers"))
@@ -163,7 +160,7 @@ export async function requireAuth(page) {
     location.href = "login.html";
   };
 
-  // Any button with data-close closes the dialog it is inside.
+  // Allows dialog buttons to close their parent dialog.
   document.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-close]");
     if (btn) btn.closest("dialog").close();
@@ -171,8 +168,7 @@ export async function requireAuth(page) {
   return user;
 }
 
-// ---------- Live connection indicator ----------
-// Updates the shared monitoring indicator when a page has one.
+// Updates the shared indicator when the live monitoring connection changes.
 export function setLiveIndicator(state, message = "") {
   const indicator = $("#live-indicator");
   if (!indicator) return;

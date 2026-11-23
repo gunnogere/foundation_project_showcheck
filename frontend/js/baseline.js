@@ -30,7 +30,7 @@ const deviceOptions = (type, item) =>
     (!d.baselineItem || d.baselineItem.id === item?.id)
   );
 
-// ---------- Compare expected and live settings ----------
+// Compare the saved settings with the device's current settings.
 function comparison(item) {
   const live = item.device?.params ?? {};
 
@@ -51,7 +51,6 @@ function comparison(item) {
   return rows.join("") || `<span class="muted">No settings defined</span>`;
 }
 
-// ---------- Render baseline information ----------
 function render() {
   $("#empty").classList.toggle("hidden", baselines.length > 0);
   $("#baseline-area").classList.toggle("hidden", baselines.length === 0);
@@ -86,7 +85,6 @@ function render() {
 
   $("#status-head").classList.toggle("hidden", !b.active);
 
-  // Equipment slots
   $("#slots").innerHTML = b.items.map((item) => {
     const status = slots.find(
       (s) => s.itemId === item.id
@@ -167,7 +165,6 @@ function render() {
   }
 }
 
-// ---------- Check history ----------
 function renderHistory(runs) {
   $("#history-card").classList.toggle("hidden", runs.length === 0);
 
@@ -184,7 +181,6 @@ function renderHistory(runs) {
   `).join("");
 }
 
-// ---------- Load baseline and device data ----------
 async function load() {
   [baselines, devices, { slots }] = await Promise.all([
     api("/baselines"),
@@ -202,13 +198,12 @@ async function loadHistory() {
 poll(load);
 loadHistory();
 
-// ---------- Baseline selection ----------
 $("#baseline-select").onchange = (e) => {
   selectedId = Number(e.target.value);
   render();
 };
 
-// ---------- Run pre-show check ----------
+// Run the check before the show starts.
 $("#run-check").onclick = guard(async () => {
   await api("/checks", { method: "POST" });
 
@@ -217,7 +212,6 @@ $("#run-check").onclick = guard(async () => {
   await Promise.all([load(), loadHistory()]);
 });
 
-// ---------- Activate baseline ----------
 $("#set-active").onclick = guard(async () => {
   await api(`/baselines/${current().id}`, {
     method: "PATCH",
@@ -229,7 +223,6 @@ $("#set-active").onclick = guard(async () => {
   await load();
 });
 
-// ---------- Delete baseline ----------
 $("#delete-baseline").onclick = guard(async () => {
   if (!confirm(`Delete "${current().name}"?`)) return;
 
@@ -242,7 +235,6 @@ $("#delete-baseline").onclick = guard(async () => {
   await load();
 });
 
-// ---------- New baseline dialog ----------
 if (canEdit) {
   $("#new-baseline").classList.remove("hidden");
   $("#empty-create").classList.remove("hidden");
@@ -277,7 +269,6 @@ $("#baseline-form").onsubmit = guard(async (e) => {
   await load();
 });
 
-// ---------- Slot table actions ----------
 $("#slots").addEventListener("change", guard(async (e) => {
   const itemId = e.target.dataset.map;
 
@@ -331,9 +322,8 @@ $("#slots").addEventListener("click", guard(async (e) => {
   }
 
   await load();
-}));
+});
 
-// ---------- Add / edit equipment slot ----------
 $("#s-type").innerHTML = DEVICE_TYPES
   .map((t) => `<option>${t}</option>`)
   .join("");

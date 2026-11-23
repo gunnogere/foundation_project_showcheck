@@ -13,8 +13,7 @@ import {
 const user = await requireAuth("map.html");
 const manage = can(user, "manageDevices");
 
-// Columns follow the signal flow:
-// sources -> network -> audio hub -> outputs.
+// Columns follow the signal flow: sources -> network -> audio hub -> outputs.
 const TIER = {
   PLAYBACK: 0,
   MICROPHONE: 0,
@@ -35,7 +34,6 @@ const PAD = 24;
 let devices = [], connections = [], slots = [];
 let selected = null;
 
-// ---------- Automatic map layout ----------
 function layout() {
   const rows = [];
   const pos = new Map();
@@ -53,7 +51,6 @@ function layout() {
   return pos;
 }
 
-// ---------- Draw network map ----------
 function drawMap() {
   const mapElement = $("#map");
 
@@ -129,7 +126,6 @@ function drawMap() {
     `;
   }).join("");
 
-  // Draw device nodes.
   const nodes = devices.map((d) => {
     const p = pos.get(d.id);
     const s = statusOf.get(d.id);
@@ -215,7 +211,6 @@ function drawMap() {
   `;
 }
 
-// ---------- Device and connection details ----------
 function drawDetails() {
   const box = $("#details");
 
@@ -349,7 +344,6 @@ function drawDetails() {
   }
 }
 
-// ---------- Populate connection selectors ----------
 function fillSelects() {
   const options = devices.length
     ? devices.map((d) =>
@@ -367,7 +361,6 @@ function fillSelects() {
   }
 }
 
-// ---------- Load map information ----------
 async function load() {
   [devices, connections, { slots }] = await Promise.all([
     api("/devices"),
@@ -375,7 +368,7 @@ async function load() {
     api("/dashboard")
   ]);
 
-  // Clear selection if its device or connection no longer exists.
+  // Clear the selection if the selected item no longer exists.
   if (
     selected?.kind === "node" &&
     !devices.some((d) => d.id === selected.id)
@@ -395,7 +388,6 @@ async function load() {
   drawDetails();
 }
 
-// ---------- Select map devices and connections ----------
 $("#map").addEventListener("click", (e) => {
   const node = e.target.closest("[data-node]");
   const edge = e.target.closest("[data-edge]");
@@ -418,7 +410,6 @@ $("#map").addEventListener("click", (e) => {
   drawDetails();
 });
 
-// ---------- Add connection ----------
 if (manage) {
   $("#add-connection").classList.remove("hidden");
 
@@ -440,5 +431,4 @@ if (manage) {
   });
 }
 
-// ---------- Automatic refresh ----------
 poll(load);

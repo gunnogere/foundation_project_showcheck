@@ -1,7 +1,5 @@
 import { $, api } from "./common.js";
 
-// ---------- Check existing session ----------
-// If the user is already signed in, redirect to dashboard.
 api("/auth/me")
   .then(() => {
     location.href = "index.html";
@@ -9,7 +7,6 @@ api("/auth/me")
   .catch(() => {
   });
 
-// ---------- Handle login ----------
 $("#login-form").addEventListener("submit", async (e) => {
   e.preventDefault();
 
