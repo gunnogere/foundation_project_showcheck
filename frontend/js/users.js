@@ -12,13 +12,11 @@ import {
 
 const user = await requireAuth("users.html");
 
-// ---------- Check permissions ----------
 if (!can(user, "manageUsers")) {
   $("#denied").classList.remove("hidden");
 } else {
   $("#content").classList.remove("hidden");
 
-  // ---------- Role options ----------
   const roleOptions = (selected) =>
     Object.entries(ROLE_LABEL)
       .map(([value, label]) => `
@@ -33,7 +31,6 @@ if (!can(user, "manageUsers")) {
 
   $("#u-role").innerHTML = roleOptions("OPERATOR");
 
-  // ---------- Load and display users ----------
   const load = poll(async () => {
     const users = await api("/users");
 
@@ -70,7 +67,6 @@ if (!can(user, "manageUsers")) {
         `;
   });
 
-  // ---------- Update a user's role ----------
   $("#users").addEventListener(
     "change",
     guard(async (e) => {
@@ -97,7 +93,6 @@ if (!can(user, "manageUsers")) {
     })
   );
 
-  // ---------- Create a new user ----------
   $("#user-form").onsubmit = guard(async (e) => {
     e.preventDefault();
 

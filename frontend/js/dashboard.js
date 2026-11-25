@@ -21,11 +21,10 @@ const STATS = [
   ["UNKNOWN", "Unknown"]
 ];
 
-// Dashboard monitoring state
+// Keep track of device status changes between refreshes.
 let previousDeviceStatuses = new Map();
 let firstDashboardLoad = true;
 
-// Update the last successful refresh time
 function updateLastUpdated() {
   const element = $("#last-updated");
 
@@ -35,7 +34,6 @@ function updateLastUpdated() {
   }
 }
 
-// Detect changes in monitored device statuses
 function detectDeviceStatusChanges(slots) {
   const currentStatuses = new Map(
     slots
@@ -76,7 +74,6 @@ function render(d) {
     ? `${b.name}${b.venue ? " - " + b.venue : ""} · live, refreshes every 5s`
     : "No active baseline";
 
-  // Overall system health
   const alerts = d.slots.filter((s) => s.status !== "PASS");
 
   if (!b) {
@@ -92,7 +89,6 @@ function render(d) {
       `<div class="banner ${cls}">${alerts.length} item(s) need attention before showtime.</div>`;
   }
 
-  // Status statistics
   $("#stats").innerHTML = STATS.map(
     ([key, label]) =>
       `<div class="stat ${key.toLowerCase()}">
@@ -101,7 +97,6 @@ function render(d) {
       </div>`
   ).join("");
 
-  // Health alerts
   $("#alerts").innerHTML = alerts.length
     ? alerts.map((s) =>
         `<div class="card" style="margin-bottom:8px;display:flex;gap:12px;align-items:flex-start">
@@ -114,7 +109,6 @@ function render(d) {
       ).join("")
     : `<p class="muted">No alerts.</p>`;
 
-  // Open incidents
   $("#incidents").innerHTML = d.openIncidents.length
     ? d.openIncidents.map((i) =>
         `<div class="row" style="justify-content:space-between;margin-bottom:8px">
@@ -124,12 +118,10 @@ function render(d) {
       ).join("")
     : `<p class="muted">None open.</p>`;
 
-  // Last completed pre-show check
   $("#last-check").textContent = d.lastCheck
     ? `Last check by ${d.lastCheck.runBy.name} at ${new Date(d.lastCheck.createdAt).toLocaleTimeString()}`
     : "";
 
-  // Device monitoring table
   $("#devices").innerHTML = d.slots.map((s) =>
     `<tr>
       <td><strong>${esc(s.label)}</strong></td>
@@ -141,7 +133,7 @@ function render(d) {
   ).join("");
 }
 
-// Refresh dashboard using the existing backend endpoint
+// Refresh the dashboard using the existing backend endpoint.
 const reload = poll(async () => {
   setLiveIndicator("connecting", "Updating...");
 
@@ -157,7 +149,6 @@ const reload = poll(async () => {
   }
 });
 
-// Run pre-show check button
 if (can(user, "runCheck")) {
   const button = $("#run-check");
 
@@ -166,10 +157,9 @@ if (can(user, "runCheck")) {
   const originalLabel = button.textContent.trim();
 
   button.onclick = guard(async () => {
-    // Prevent duplicate checks
     if (button.disabled) return;
 
-    // Immediate visual feedback
+    // Give feedback while the check is running.
     button.disabled = true;
     button.classList.add("checking");
 
@@ -181,7 +171,6 @@ if (can(user, "runCheck")) {
     button.setAttribute("aria-busy", "true");
 
     try {
-      // Existing backend request remains unchanged
       await api("/checks", {
         method: "POST"
       });
@@ -191,7 +180,7 @@ if (can(user, "runCheck")) {
       await reload();
 
     } finally {
-      // Restore button whether the request succeeds or fails
+      // Restore the button once the check is finished.
       button.disabled = false;
       button.classList.remove("checking");
       button.removeAttribute("aria-busy");

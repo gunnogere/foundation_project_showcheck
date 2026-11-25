@@ -30,7 +30,6 @@ const viaBadge = (via) =>
     ${VIA_LABEL[via]}
   </span>`;
 
-// ---------- Registered device inventory ----------
 function render() {
   if (!devices.length) {
     $("#devices").innerHTML = `
@@ -99,13 +98,11 @@ function render() {
   `).join("");
 }
 
-// ---------- Load registered devices ----------
 const load = poll(async () => {
   devices = await api("/devices");
   render();
 });
 
-// ---------- Device actions ----------
 $("#devices").addEventListener("click", guard(async (e) => {
   const btn = e.target.closest("[data-act]");
   if (!btn) return;
@@ -135,7 +132,6 @@ $("#devices").addEventListener("click", guard(async (e) => {
   }
 }));
 
-// ---------- Edit device ----------
 $("#edit-form").onsubmit = guard(async (e) => {
   e.preventDefault();
 
@@ -154,7 +150,6 @@ $("#edit-form").onsubmit = guard(async (e) => {
   await load();
 });
 
-// ---------- Register dialog ----------
 if (manage) {
   $("#register").classList.remove("hidden");
   $("#discovery-settings").classList.remove("hidden");
@@ -184,7 +179,6 @@ $("#m-type").innerHTML = DEVICE_TYPES.map((t) =>
   `<option ${t === "OTHER" ? "selected" : ""}>${t}</option>`
 ).join("");
 
-// ---------- Registration tabs ----------
 document.querySelectorAll("[data-tab]").forEach((btn) =>
   btn.addEventListener("click", () => {
     document.querySelectorAll("[data-tab]").forEach((b) =>
@@ -203,7 +197,6 @@ document.querySelectorAll("[data-tab]").forEach((btn) =>
   })
 );
 
-// ---------- Device discovery selection ----------
 const pickedIds = new Set();
 
 const picked = () => [...pickedIds];
@@ -233,7 +226,6 @@ const FILTERS = {
   rf: () => false
 };
 
-// ---------- Render discovered devices ----------
 function renderFound() {
   document.querySelectorAll("[data-filter]").forEach((b) => {
     b.classList.toggle(
@@ -321,7 +313,6 @@ function renderFound() {
   }).join("");
 }
 
-// ---------- Discovery filters ----------
 document.querySelectorAll("[data-filter]").forEach((btn) =>
   btn.addEventListener("click", () => {
     filter = btn.dataset.filter;
@@ -329,7 +320,6 @@ document.querySelectorAll("[data-filter]").forEach((btn) =>
   })
 );
 
-// ---------- Scan network and Bluetooth ----------
 $("#scan").onclick = guard(async () => {
   $("#scan").disabled = true;
   $("#scan").innerHTML = `Scanning${DOTS}`;
@@ -363,8 +353,7 @@ $("#scan").onclick = guard(async () => {
     }
   }
 
-  // Adoptable first, then registered, then named hosts,
-  // followed by unknown hosts.
+  // Put devices that can be registered at the top of the list.
   const rank = (d) =>
     d.adoptable
       ? (d.registered ? 1 : 0)
@@ -392,7 +381,6 @@ $("#scan").onclick = guard(async () => {
   updatePickedButton();
 });
 
-// ---------- Select discovered devices ----------
 $("#found").addEventListener("change", (e) => {
   if (e.target.type !== "checkbox") return;
 
@@ -405,7 +393,6 @@ $("#found").addEventListener("change", (e) => {
   updatePickedButton();
 });
 
-// ---------- Register selected discovered devices ----------
 $("#register-picked").onclick = guard(async () => {
   const ids = picked();
 
@@ -446,7 +433,6 @@ $("#register-picked").onclick = guard(async () => {
   await load();
 });
 
-// ---------- Register manual / analogue device ----------
 $("#tab-manual").onsubmit = guard(async (e) => {
   e.preventDefault();
 

@@ -1,4 +1,3 @@
-// Simple line icons (24x24). `deviceIcon` is for registered devices, `hostIcon` for scan results.
 const PATHS = {
   phone: '<rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>',
   tablet: '<rect x="4" y="2" width="16" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>',
